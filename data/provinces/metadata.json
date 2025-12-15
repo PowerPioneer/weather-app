@@ -1,0 +1,45 @@
+{
+  "source": "Natural Earth",
+  "dataset": "Admin-1 States and Provinces",
+  "version": "10m (1:10 million scale)",
+  "license": "Public Domain",
+  "url": "https://www.naturalearthdata.com",
+  "commercial_use": true,
+  "downloaded_date": "2025-12-10",
+  "total_provinces": 4596,
+  "total_countries": 253,
+  "bounds": {
+    "west": -179.99999999999991,
+    "south": -89.99999999999994,
+    "east": 180.0,
+    "north": 83.63410065300008
+  },
+  "available_attributes": [
+    "name",
+    "name_alt",
+    "admin",
+    "iso_a2",
+    "iso_3166_2",
+    "type",
+    "latitude",
+    "longitude",
+    "geometry"
+  ],
+  "top_10_countries_by_province_count": {
+    "United Kingdom": 232,
+    "Slovenia": 193,
+    "Latvia": 119,
+    "Philippines": 118,
+    "Uganda": 112,
+    "Italy": 110,
+    "France": 101,
+    "Russia": 86,
+    "Macedonia": 84,
+    "Turkey": 81
+  },
+  "files": {
+    "shapefile": "ne_10m_admin_1_states_provinces.shp",
+    "geojson": "provinces.geojson",
+    "metadata": "metadata.json"
+  }
+}

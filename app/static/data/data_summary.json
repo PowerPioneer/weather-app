@@ -1,0 +1,26 @@
+{
+  "total_files": 192,
+  "variables": {
+    "tmin": {
+      "name": "Minimum Temperature",
+      "unit": "\u00b0C",
+      "months_available": 12
+    },
+    "tmax": {
+      "name": "Maximum Temperature",
+      "unit": "\u00b0C",
+      "months_available": 12
+    },
+    "prec": {
+      "name": "Precipitation",
+      "unit": "mm",
+      "months_available": 12
+    },
+    "srad": {
+      "name": "Solar Radiation",
+      "unit": "kJ/m\u00b2/day",
+      "months_available": 0
+    }
+  },
+  "generated": "2025-11-29T22:03:42.342831"
+}

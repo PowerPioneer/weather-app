@@ -1,0 +1,22 @@
+{
+  "source": "ERA5",
+  "description": "ERA5 is the fifth generation ECMWF reanalysis for global climate and weather",
+  "resolution": "0.25 degrees (~28 km)",
+  "period": "2020-2024 (5 years monthly averages)",
+  "variables": {
+    "tmin": "Minimum 2m temperature (\u00b0C)",
+    "tmax": "Maximum 2m temperature (\u00b0C)",
+    "prec": "Daily average precipitation (mm/day)"
+  },
+  "license": "CC-BY 4.0 (free for commercial use)",
+  "citation": "Hersbach et al. (2020): ERA5 monthly averaged data on single levels. Copernicus Climate Change Service (C3S) Climate Data Store (CDS). DOI: 10.24381/cds.f17050d7",
+  "website": "https://cds.climate.copernicus.eu/",
+  "notes": [
+    "Temperature statistics derived from monthly mean 2m temperature",
+    "Precipitation: ERA5 monthly means provide daily averages (mm/day)",
+    "Precipitation converted from meters to millimeters",
+    "Data accessed via Copernicus Climate Data Store",
+    "Commercial use permitted under CC-BY 4.0 license"
+  ],
+  "processed_date": "2025-12-11T18:21:23.507041"
+}

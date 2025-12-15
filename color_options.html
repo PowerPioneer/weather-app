@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Options - Where to Go for Great Weather</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f9f9f9;
+            padding: 2rem;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #333;
+            font-size: 2rem;
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .option {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .option h2 {
+            padding: 1rem;
+            text-align: center;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        }
+        
+        .website-preview {
+            padding: 0;
+        }
+        
+        .preview-header {
+            padding: 2rem;
+            color: white;
+            text-align: center;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        }
+        
+        .preview-header h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            font-weight: 300;
+        }
+        
+        .preview-header p {
+            font-size: 0.95rem;
+            opacity: 0.95;
+        }
+        
+        .preview-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: #f9f9f9;
+            flex-wrap: wrap;
+        }
+        
+        .btn-primary {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: white;
+            background: var(--color-primary);
+            transition: opacity 0.2s;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.85;
+        }
+        
+        .btn-secondary {
+            padding: 0.7rem 1.5rem;
+            border: 2px solid var(--color-primary);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--color-primary);
+            background: white;
+            transition: opacity 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            opacity: 0.7;
+        }
+        
+        .map-sample {
+            padding: 1.5rem;
+            background: #fff;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+        
+        .region {
+            height: 50px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .color-info {
+            padding: 1.5rem;
+            background: #f9f9f9;
+            border-top: 1px solid #eee;
+        }
+        
+        .color-code {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 0.8rem;
+            padding: 0.5rem 0.8rem;
+            background: white;
+            border-left: 3px solid var(--color-primary);
+        }
+        
+        .description {
+            font-size: 0.9rem;
+            color: #555;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <h1>Color Options - Website Preview</h1>
+    
+    <div class="options-container">
+        
+        <!-- Option 1: Sage Teal -->
+        <div class="option">
+            <style>
+                .option:nth-child(1) { --color-primary: #8b9b8a; --color-secondary: #a8b5a3; }
+            </style>
+            <h2>Option 1: Sage Teal</h2>
+            <div class="website-preview">
+                <div class="preview-header">
+                    <h3>Where to Go</h3>
+                    <p>Find your perfect weather</p>
+                </div>
+                <div class="preview-buttons">
+                    <button class="btn-primary">Explore</button>
+                    <button class="btn-secondary">Learn More</button>
+                </div>
+                <div class="map-sample">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #8b9b8a;"></div>
+                            <span>Perfect</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #a8b5a3;"></div>
+                            <span>Good</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #d4dccf;"></div>
+                            <span>OK</span>
+                        </div>
+                    </div>
+                    <div class="map-grid">
+                        <div class="region" style="background: #8b9b8a;">●</div>
+                        <div class="region" style="background: #a8b5a3;">●</div>
+                        <div class="region" style="background: #d4dccf; color: #8b9b8a;">●</div>
+                        <div class="region" style="background: #f0f0f0; color: #999;">-</div>
+                        <div class="region" style="background: #a8b5a3;">●</div>
+                        <div class="region" style="background: #8b9b8a;">●</div>
+                        <div class="region" style="background: #f0f0f0; color: #999;">-</div>
+                        <div class="region" style="background: #d4dccf; color: #8b9b8a;">●</div>
+                    </div>
+                </div>
+                <div class="color-info">
+                    <div class="color-code">#8b9b8a</div>
+                    <div class="description">Soft sage tone with natural teal undertones. Calming and organic feel.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Option 2: Ocean Teal -->
+        <div class="option">
+            <style>
+                .option:nth-child(2) { --color-primary: #6b9b94; --color-secondary: #84a8a0; }
+            </style>
+            <h2>Option 2: Ocean Teal</h2>
+            <div class="website-preview">
+                <div class="preview-header">
+                    <h3>Where to Go</h3>
+                    <p>Find your perfect weather</p>
+                </div>
+                <div class="preview-buttons">
+                    <button class="btn-primary">Explore</button>
+                    <button class="btn-secondary">Learn More</button>
+                </div>
+                <div class="map-sample">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #6b9b94;"></div>
+                            <span>Perfect</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #84a8a0;"></div>
+                            <span>Good</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #c2d8d5;"></div>
+                            <span>OK</span>
+                        </div>
+                    </div>
+                    <div class="map-grid">
+                        <div class="region" style="background: #6b9b94;">●</div>
+                        <div class="region" style="background: #84a8a0;">●</div>
+                        <div class="region" style="background: #c2d8d5; color: #6b9b94;">●</div>
+                        <div class="region" style="background: #f0f0f0; color: #999;">-</div>
+                        <div class="region" style="background: #84a8a0;">●</div>
+                        <div class="region" style="background: #6b9b94;">●</div>
+                        <div class="region" style="background: #f0f0f0; color: #999;">-</div>
+                        <div class="region" style="background: #c2d8d5; color: #6b9b94;">●</div>
+                    </div>
+                </div>
+                <div class="color-info">
+                    <div class="color-code">#6b9b94</div>
+                    <div class="description">Balanced medium teal. Fresh and inviting, perfect for tropical vibes.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Option 3: Deep Ocean -->
+        <div class="option">
+            <style>
+                .option:nth-child(3) { --color-primary: #4a7d78; --color-secondary: #5d8f87; }
+            </style>
+            <h2>Option 3: Deep Ocean</h2>
+            <div class="website-preview">
+                <div class="preview-header">
+                    <h3>Where to Go</h3>
+                    <p>Find your perfect weather</p>
+                </div>
+                <div class="preview-buttons">
+                    <button class="btn-primary">Explore</button>
+                    <button class="btn-secondary">Learn More</button>
+                </div>
+                <div class="map-sample">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #4a7d78;"></div>
+                            <span>Perfect</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #5d8f87;"></div>
+                            <span>Good</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #aeccc8;"></div>
+                            <span>OK</span>
+                        </div>
+                    </div>
+                    <div class="map-grid">
+                        <div class="region" style="background: #4a7d78;">●</div>
+                        <div class="region" style="background: #5d8f87;">●</div>
+                        <div class="region" style="background: #aeccc8; color: #4a7d78;">●</div>
+                        <div class="region" style="background: #f0f0f0; color: #999;">-</div>
+                        <div class="region" style="background: #5d8f87;">●</div>
+                        <div class="region" style="background: #4a7d78;">●</div>
+                        <div class="region" style="background: #f0f0f0; color: #999;">-</div>
+                        <div class="region" style="background: #aeccc8; color: #4a7d78;">●</div>
+                    </div>
+                </div>
+                <div class="color-info">
+                    <div class="color-code">#4a7d78</div>
+                    <div class="description">Deep teal with sophistication. Professional yet warm and welcoming.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Option 4: Navy Teal -->
+        <div class="option">
+            <style>
+                .option:nth-child(4) { --color-primary: #35596a; --color-secondary: #4a6b7c; }
+            </style>
+            <h2>Option 4: Navy Teal</h2>
+            <div class="website-preview">
+                <div class="preview-header">
+                    <h3>Where to Go</h3>
+                    <p>Find your perfect weather</p>
+                </div>
+                <div class="preview-buttons">
+                    <button class="btn-primary">Explore</button>
+                    <button class="btn-secondary">Learn More</button>
+                </div>
+                <div class="map-sample">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #35596a;"></div>
+                            <span>Perfect</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #4a6b7c;"></div>
+                            <span>Good</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #9bb3c5;"></div>
+                            <span>OK</span>
+                        </div>
+                    </div>
+                    <div class="map-grid">
+                        <div class="region" style="background: #35596a;">●</div>
+                        <div class="region" style="background: #4a6b7c;">●</div>
+                        <div class="region" style="background: #9bb3c5; color: #35596a;">●</div>
+                        <div class="region" style="background: #f0f0f0; color: #999;">-</div>
+                        <div class="region" style="background: #4a6b7c;">●</div>
+                        <div class="region" style="background: #35596a;">●</div>
+                        <div class="region" style="background: #f0f0f0; color: #999;">-</div>
+                        <div class="region" style="background: #9bb3c5; color: #35596a;">●</div>
+                    </div>
+                </div>
+                <div class="color-info">
+                    <div class="color-code">#35596a</div>
+                    <div class="description">Rich navy-teal blend. Premium and trustworthy with cool elegance.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Option 5: Dark Teal -->
+        <div class="option">
+            <style>
+                .option:nth-child(5) { --color-primary: #3a5f5f; --color-secondary: #4f7d7d; }
+            </style>
+            <h2>Option 5: Dark Teal</h2>
+            <div class="website-preview">
+                <div class="preview-header">
+                    <h3>Where to Go</h3>
+                    <p>Find your perfect weather</p>
+                </div>
+                <div class="preview-buttons">
+                    <button class="btn-primary">Explore</button>
+                    <button class="btn-secondary">Learn More</button>
+                </div>
+                <div class="map-sample">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #3a5f5f;"></div>
+                            <span>Perfect</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #4f7d7d;"></div>
+                            <span>Good</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #a9c4c4;"></div>
+                            <span>OK</span>
+                        </div>
+                    </div>
+                    <div class="map-grid">
+                        <div class="region" style="background: #3a5f5f;">●</div>
+                        <div class="region" style="background: #4f7d7d;">●</div>
+                        <div class="region" style="background: #a9c4c4; color: #3a5f5f;">●</div>
+                        <div class="region" style="background: #f0f0f0; color: #999;">-</div>
+                        <div class="region" style="background: #4f7d7d;">●</div>
+                        <div class="region" style="background: #3a5f5f;">●</div>
+                        <div class="region" style="background: #f0f0f0; color: #999;">-</div>
+                        <div class="region" style="background: #a9c4c4; color: #3a5f5f;">●</div>
+                    </div>
+                </div>
+                <div class="color-info">
+                    <div class="color-code">#3a5f5f</div>
+                    <div class="description">Deep forest teal. Sophisticated and grounded with natural feel.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Option 6: Cream & Sage -->
+        <div class="option">
+            <style>
+                .option:nth-child(6) { --color-primary: #5a9b8e; --color-secondary: #8fb9a6; }
+            </style>
+            <h2>Option 6: Cream & Sage Gradient</h2>
+            <div class="website-preview">
+                <div class="preview-header">
+                    <h3>Where to Go</h3>
+                    <p>Find your perfect weather</p>
+                </div>
+                <div class="preview-buttons">
+                    <button class="btn-primary" style="background: linear-gradient(90deg, #e8dfd2, #8fb9a6, #5a9b8e);">Explore (L→R)</button>
+                    <button class="btn-secondary" style="border-color: #5a9b8e; color: #5a9b8e; background: linear-gradient(90deg, #5a9b8e, #8fb9a6, #e8dfd2);">Learn More (R→L)</button>
+                </div>
+                <div class="map-sample">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #e8dfd2;"></div>
+                            <span>Perfect</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #8fb9a6;"></div>
+                            <span>Good</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #5a9b8e;"></div>
+                            <span>OK</span>
+                        </div>
+                    </div>
+                    <div class="map-grid">
+                        <div class="region" style="background: #e8ddf2;">●</div>
+                        <div class="region" style="background: #8fb9a6;">●</div>
+                        <div class="region" style="background: #5a9b8e; color: #fff;">●</div>
+                        <div class="region" style="background: #f0f0f0; color: #999;">-</div>
+                        <div class="region" style="background: #8fb9a6;">●</div>
+                        <div class="region" style="background: #e8ddf2;">●</div>
+                        <div class="region" style="background: #f0f0f0; color: #999;">-</div>
+                        <div class="region" style="background: #5a9b8e; color: #fff;">●</div>
+                    </div>
+                </div>
+                <div class="color-info">
+                    <div class="color-code">#e8dfd2 → #8fb9a6 → #5a9b8e</div>
+                    <div class="description">Warm cream to sage to teal gradient. Natural progression from light to rich tones.</div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>

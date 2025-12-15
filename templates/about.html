@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Where to Go for Great Weather</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Override the body overflow hidden for the about page */
+        body, html {
+            overflow: auto !important;
+            height: auto !important;
+        }
+
+        #app {
+            height: auto !important;
+        }
+
+        main {
+            overflow: auto !important;
+            height: auto !important;
+            display: block !important;
+        }
+
+        .about-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            line-height: 1.6;
+        }
+
+        .about-container h1 {
+            color: #D94A3D;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .about-container h2 {
+            color: #D94A3D;
+            font-size: 1.75rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #FFE0B2;
+            padding-bottom: 0.5rem;
+        }
+
+        .about-container p {
+            margin-bottom: 1rem;
+            color: #5D4037;
+        }
+
+        .about-container ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .about-container li {
+            margin-bottom: 0.5rem;
+            color: #5D4037;
+        }
+
+        .about-container a {
+            color: #D94A3D;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .about-container a:hover {
+            border-bottom-color: #D94A3D;
+        }
+
+        .data-source {
+            background: #FFF9F5;
+            border-left: 4px solid #D94A3D;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: #D94A3D;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border: 2px solid #D94A3D;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: #D94A3D;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <div class="header-content">
+                <div class="header-left">
+                </div>
+                <div class="header-center">
+                    <h1>About</h1>
+                    <p>Where to Go for Great Weather</p>
+                </div>
+                <div class="header-right">
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="about-container">
+                <a href="/" class="back-link">← Back to Map</a>
+
+                <h1>About This Project</h1>
+                <p>
+                    <strong>Where to Go for Great Weather</strong> is an interactive vacation planning tool that helps you find the best destinations based on weather conditions worldwide. Whether you're seeking sunshine, mild temperatures, or dry seasons, this application visualizes global weather patterns to inform your travel decisions.
+                </p>
+
+                <h2>Data Sources</h2>
+                
+                <div class="data-source">
+                    <h3>ERA5 Reanalysis</h3>
+                    <p>
+                        The temperature and precipitation data in this application comes from <strong>ERA5</strong>, the fifth generation ECMWF (European Centre for Medium-Range Weather Forecasts) reanalysis for global climate and weather.
+                    </p>
+                    <p><strong>Variables included:</strong></p>
+                    <ul>
+                        <li><strong>Temperature (tmin/tmax):</strong> Monthly minimum and maximum temperatures in °C (derived from 2m temperature)</li>
+                        <li><strong>Precipitation (prec):</strong> Monthly total precipitation in mm</li>
+                    </ul>
+                    <p><strong>Time Period:</strong> 2020-2024 (5 years monthly averages)</p>
+                    <p><strong>Resolution:</strong> 0.25 degrees (~28 km)</p>
+                    <p><strong>License:</strong> CC-BY 4.0 (free for commercial use with attribution)</p>
+                    <p>
+                        <strong>Citation:</strong> Hersbach et al. (2020): ERA5 monthly averaged data on single levels. Copernicus Climate Change Service (C3S) Climate Data Store (CDS). DOI: 10.24381/cds.f17050d7
+                    </p>
+                    <p>
+                        <strong>Attribution:</strong> "Generated using Copernicus Climate Change Service information"
+                    </p>
+                    <p>
+                        <strong>Website:</strong> <a href="https://cds.climate.copernicus.eu/" target="_blank">https://cds.climate.copernicus.eu/</a>
+                    </p>
+                </div>
+
+                <div class="data-source">
+                    <h3>CRU Sunshine Hours</h3>
+                    <p>
+                        Sunshine hour data is derived from the <strong>Climatic Research Unit (CRU)</strong> Time-Series dataset v4.09, which provides high-resolution gridded climate data.
+                    </p>
+                    <p><strong>Resolution:</strong> 10 arc-minutes (~18 km)</p>
+                    <p><strong>License:</strong> Open Government Licence v3.0 (free for commercial use with attribution)</p>
+                    <p>
+                        <strong>Citation:</strong> Harris, I., Osborn, T.J., Jones, P. et al. Version 4 of the CRU TS monthly high-resolution gridded multivariate climate dataset. Sci Data 7, 109 (2020). https://doi.org/10.1038/s41597-020-0453-3
+                    </p>
+                    <p>
+                        <strong>Attribution:</strong> "Climatic Research Unit (University of East Anglia) and NCAS"
+                    </p>
+                    <p>
+                        <strong>Website:</strong> <a href="https://crudata.uea.ac.uk/cru/data/hrg/" target="_blank">https://crudata.uea.ac.uk/cru/data/hrg/</a>
+                    </p>
+                </div>
+
+                <h2>Features</h2>
+                <ul>
+                    <li><strong>Interactive World Map:</strong> Explore weather conditions across the globe</li>
+                    <li><strong>Monthly Data:</strong> View climate data for any month of the year</li>
+                    <li><strong>Multiple Variables:</strong> Switch between temperature, precipitation, and sunshine hours</li>
+                    <li><strong>Visual Color Schemes:</strong> Intuitive color gradients for easy interpretation</li>
+                    <li><strong>Detailed Information:</strong> Click anywhere on the map for specific location data</li>
+                </ul>
+
+                <h2>How to Use</h2>
+                <ol>
+                    <li>Select a month from the dropdown in the top-left corner</li>
+                    <li>Choose a weather variable from the layer selector on the left</li>
+                    <li>Explore the map by panning and zooming</li>
+                    <li>Click on any location to see detailed weather information</li>
+                    <li>Use the preferences panel to filter destinations based on your ideal conditions</li>
+                </ol>
+
+                <h2>Technology</h2>
+                <p>
+                    This application is built with:
+                </p>
+                <ul>
+                    <li><strong>Backend:</strong> Python Flask</li>
+                    <li><strong>Frontend:</strong> HTML, CSS, JavaScript</li>
+                    <li><strong>Mapping:</strong> Leaflet.js</li>
+                    <li><strong>Data Processing:</strong> Rasterio, NumPy, Pandas</li>
+                </ul>
+
+                <h2>License & Terms</h2>
+                <p>
+                    <strong>All climate data is freely available for commercial use</strong> under the following terms:
+                </p>
+                <ul>
+                    <li><strong>ERA5:</strong> CC-BY 4.0 license - requires attribution to Copernicus Climate Change Service</li>
+                    <li><strong>CRU:</strong> Open Government Licence v3.0 - requires attribution to CRU (University of East Anglia) and NCAS</li>
+                </ul>
+                <p>
+                    This application is provided for informational and educational purposes. Weather data should be verified with current forecasts before making travel decisions.
+                </p>
+
+                <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #ddd; text-align: center; color: #888;">
+                    <p>Life's too short for bad weather ☀️</p>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

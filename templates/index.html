@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Where to Go for Great Weather</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <div class="header-content">
+                <div class="header-left">
+                    <label for="monthSelect" class="month-label">Month:</label>
+                    <select id="monthSelect" class="month-select">
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6" selected>June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="header-center">
+                    <h1>Where to Go for Great Weather</h1>
+                    <p>Life's too short for bad weather</p>
+                </div>
+                <div class="header-right">
+                    <a href="/about" class="about-link">About</a>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="map-container-fullscreen">
+                <div id="map" class="map"></div>
+                
+                <!-- Climate Preferences Sidebar (left side, collapsible) -->
+                <div class="climate-preferences-sidebar collapsed">
+                    <button class="preferences-toggle" id="preferencesToggle">
+                        <span class="toggle-icon">⚙️</span>
+                        <span class="toggle-text">Climate Preferences</span>
+                    </button>
+                    
+                    <div class="preferences-content" id="preferencesContent">
+                        <!-- Display Mode Selector -->
+                        <div class="display-mode-section">
+                            <h3>Display Mode</h3>
+                            <div class="mode-buttons">
+                                <button class="mode-btn active" data-mode="overall">
+                                    <span class="icon">🌍</span> Overall
+                                </button>
+                                <button class="mode-btn" data-mode="temperature">
+                                    <span class="icon">🌡️</span> Temp
+                                </button>
+                                <button class="mode-btn" data-mode="rainfall">
+                                    <span class="icon">🌧️</span> Rain
+                                </button>
+                                <button class="mode-btn" data-mode="sunshine">
+                                    <span class="icon">☀️</span> Sun
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Temperature Range -->
+                        <div class="preference-section">
+                            <h3>Temperature: <span id="tempRange">18°C - 28°C</span></h3>
+                            <div class="dual-slider">
+                                <input type="range" id="tempMin" min="-20" max="50" value="18" step="1">
+                                <input type="range" id="tempMax" min="-20" max="50" value="28" step="1">
+                                <div class="slider-track"></div>
+                            </div>
+                        </div>
+
+                        <!-- Rainfall Range -->
+                        <div class="preference-section">
+                            <h3>Rainfall: <span id="rainRange">0 - 3 mm/day</span></h3>
+                            <div class="dual-slider">
+                                <input type="range" id="rainMin" min="0" max="20" value="0" step="0.5">
+                                <input type="range" id="rainMax" min="0" max="20" value="3" step="0.5">
+                                <div class="slider-track"></div>
+                            </div>
+                        </div>
+
+                        <!-- Sunshine Range -->
+                        <div class="preference-section">
+                            <h3>Sunshine: <span id="sunRange">6 - 12 h/day</span></h3>
+                        <div class="dual-slider">
+                            <input type="range" id="sunMin" min="0" max="15" value="6" step="0.5">
+                            <input type="range" id="sunMax" min="0" max="15" value="12" step="0.5">
+                            <div class="slider-track"></div>
+                        </div>
+                    </div>
+                    
+                        <!-- Temperature Unit Selector -->
+                        <div class="preference-section">
+                            <h3>Temperature Unit</h3>
+                            <div class="temp-unit-buttons-sidebar">
+                                <button class="temp-unit-btn active" data-unit="C">°C</button>
+                                <button class="temp-unit-btn" data-unit="F">°F</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legend overlay (top center) -->
+                <div class="legend-overlay">
+                    <div id="legend-content-horizontal">
+                        <div class="legend-item">
+                            <span style="font-weight: 600;">Overall:</span>
+                            <div class="legend-colors">
+                                <span class="legend-color" style="background: #4ade80;">Good</span>
+                                <span class="legend-color" style="background: #fb923c;">Moderate</span>
+                                <span class="legend-color" style="background: #fbbf24;">Partial</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info message overlay (bottom center) -->
+                <div class="info-message-overlay">
+                    Click on a spot on the map to see local climate information
+                </div>
+
+                <!-- Weather details panel (right side, hidden by default) -->
+                <div class="weather-details-overlay" id="weatherDetailsPanel" style="display: none;">
+                    <button class="close-btn" onclick="document.getElementById('weatherDetailsPanel').style.display='none'">&times;</button>
+                    <h2>Climate Information</h2>
+                    <div id="locationInfo" style="margin-bottom: 1rem;">
+                        <div id="locationDetails" style="margin-top: 0.5rem; font-size: 0.9rem;">
+                            <p><strong>Country:</strong> <span id="countryName">-</span></p>
+                            <p><strong>Region:</strong> <span id="regionName">-</span></p>
+                        </div>
+                    </div>
+                    <div id="weatherInfo">
+                        <p>Loading weather information...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

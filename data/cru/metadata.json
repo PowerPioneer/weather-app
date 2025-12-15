@@ -1,0 +1,16 @@
+{
+  "source": "CRU (Climatic Research Unit)",
+  "dataset": "CRU TS (Time-Series) v4.09",
+  "resolution": "10 arc-minutes (1/6 degree)",
+  "variables": {
+    "sunhours": "Monthly sunshine hours per day (hours/day)"
+  },
+  "processing": "Converted from sunshine percentage to hours/day using astronomical calculations",
+  "citation": "Harris, I., Osborn, T.J., Jones, P. et al. Version 4 of the CRU TS monthly high-resolution gridded multivariate climate dataset. Sci Data 7, 109 (2020). https://doi.org/10.1038/s41597-020-0453-3",
+  "website": "https://crudata.uea.ac.uk/cru/data/hrg/",
+  "license": "Open Government Licence v3.0 (free for commercial use with attribution)",
+  "license_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+  "attribution": "Climatic Research Unit (University of East Anglia) and NCAS",
+  "created": "2025-12-10",
+  "description": "Sunshine hours data processed from CRU sunshine percentage data"
+}
