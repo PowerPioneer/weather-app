@@ -506,7 +506,7 @@ function updateRangeSlider(type, minSlider, maxSlider) {
 }
 
 /**
- * Update map layers based on display mode
+ * Update map layers based on display mode and zoom level
  */
 async function updateMapLayers() {
     // Set current variable based on display mode
@@ -521,10 +521,19 @@ async function updateMapLayers() {
     // Update legend
     updateLegend();
     
-    // Update visualization using province data
+    // Get current zoom level
+    const zoom = state.map.getZoom();
+    const COUNTRY_ZOOM_THRESHOLD = 5; // Show countries when zoom < 5, provinces when zoom >= 5
+    
+    // Update visualization based on zoom level
     if (state.selectedMonth) {
-        console.log('Updating map with province data for month:', state.selectedMonth);
-        await createProvinceOverlay();
+        if (zoom < COUNTRY_ZOOM_THRESHOLD) {
+            console.log(`Zoom ${zoom} < ${COUNTRY_ZOOM_THRESHOLD}: Using country data for month:`, state.selectedMonth);
+            await createCountryOverlay();
+        } else {
+            console.log(`Zoom ${zoom} >= ${COUNTRY_ZOOM_THRESHOLD}: Using province data for month:`, state.selectedMonth);
+            await createProvinceOverlay();
+        }
     }
 }
 
@@ -1137,6 +1146,215 @@ function calculateOverallScore(tempAvg, prec, sunhours) {
     
     const score = matchCount / totalCriteria;
     return { score, color, matchCount, totalCriteria };
+}
+
+/**
+ * Create country-based map visualization
+ * Uses pre-aggregated country data for zoomed-out views
+ */
+async function createCountryOverlay() {
+    const variable = state.currentVariable;
+    const month = state.selectedMonth;
+    
+    console.log(`createCountryOverlay: variable=${variable}, month=${month}`);
+    
+    if (!month || !variable) {
+        console.log('No month or variable selected');
+        return;
+    }
+    
+    state.isLoading = true;
+    
+    try {
+        // Check if we have cached data for this month
+        const cacheKey = `country_month_${month}`;
+        let geojsonData;
+        
+        if (state[cacheKey]) {
+            console.log('Using cached country data');
+            geojsonData = state[cacheKey];
+        } else {
+            // Fetch country data from API
+            const url = `/api/countries?month=${month}&variable=${variable}`;
+            console.log(`Fetching country data: ${url}`);
+            
+            const response = await fetch(url);
+            const result = await response.json();
+            
+            if (result.error) {
+                console.error('Error fetching country data:', result.error);
+                state.isLoading = false;
+                return;
+            }
+            
+            geojsonData = result.data;
+            // Cache the data
+            state[cacheKey] = geojsonData;
+        }
+        
+        // Map variable names to data field names
+        const variableFieldMap = {
+            'temperature': 'temp_avg',
+            'rainfall': 'prec_mean',
+            'sunshine': 'sunhours_mean',
+            'overall': 'overall_score'
+        };
+        
+        const dataField = variableFieldMap[variable];
+        
+        // Create style function based on variable
+        const styleFunction = (feature) => {
+            const props = feature.properties;
+            const value = props[dataField];
+            
+            // No data - show very light gray
+            if (value === null || value === undefined) {
+                return {
+                    fillColor: '#ccc',
+                    fillOpacity: 0.1,
+                    color: '#b8c9c6',
+                    weight: 0.5,
+                    opacity: 0.3
+                };
+            }
+            
+            let fillColor, fillOpacity;
+            
+            if (variable === 'overall') {
+                // Calculate overall score based on current user preferences
+                const tempAvg = props.temp_avg;
+                const prec = props.prec_mean;
+                const sunhours = props.sunhours_mean;
+                
+                const result = calculateOverallScore(tempAvg, prec, sunhours);
+                
+                if (result) {
+                    const [r, g, b, a] = result.color;
+                    fillColor = `rgb(${r}, ${g}, ${b})`;
+                    fillOpacity = a;
+                } else {
+                    fillColor = '#ccc';
+                    fillOpacity = 0.1;
+                }
+            } else {
+                // Use gradient for specific variables
+                const gradient = layerConfig[variable].gradient;
+                const [r, g, b, a] = getColorForValue(value, gradient);
+                fillColor = `rgb(${r}, ${g}, ${b})`;
+                fillOpacity = a;
+            }
+            
+            return {
+                fillColor: fillColor,
+                fillOpacity: fillOpacity,
+                color: '#b8c9c6',
+                weight: 0.5,
+                opacity: 0.3
+            };
+        };
+        
+        // Remove old layer
+        if (state.heatmapLayer) {
+            state.map.removeLayer(state.heatmapLayer);
+            state.heatmapLayer = null;
+        }
+        
+        // Create new GeoJSON layer
+        state.heatmapLayer = L.geoJSON(geojsonData, {
+            style: styleFunction,
+            onEachFeature: (feature, layer) => {
+                const props = feature.properties;
+                const value = props[dataField];
+                
+                // Format value for display
+                let valueStr = 'No data';
+                if (value !== null && value !== undefined) {
+                    if (variable === 'overall') {
+                        valueStr = `Score: ${(value * 100).toFixed(0)}%`;
+                    } else if (variable === 'temperature') {
+                        const tempC = value;
+                        const tempF = (tempC * 9/5) + 32;
+                        valueStr = state.temperatureUnit === 'C' 
+                            ? `${tempC.toFixed(1)}°C` 
+                            : `${tempF.toFixed(1)}°F`;
+                    } else if (variable === 'rainfall') {
+                        valueStr = `${value.toFixed(1)} mm/day`;
+                    } else if (variable === 'sunshine') {
+                        valueStr = `${value.toFixed(1)} hours/day`;
+                    }
+                }
+                
+                const countryName = props.name || 'Unknown';
+                
+                // Bind popup
+                layer.bindPopup(
+                    `<strong>${countryName}</strong><br>${valueStr}`,
+                    { closeButton: false }
+                );
+                
+                // Add hover and click highlighting
+                layer.on('mouseover', function(e) {
+                    const layer = e.target;
+                    layer.setStyle({
+                        weight: 2,
+                        opacity: 0.7,
+                        color: '#2c5f4f'
+                    });
+                    layer.openPopup();
+                });
+                
+                layer.on('mouseout', function(e) {
+                    const layer = e.target;
+                    // Only reset if this isn't the selected layer
+                    if (state.selectedLayer !== layer) {
+                        layer.setStyle({
+                            weight: 0.5,
+                            opacity: 0.3,
+                            color: '#b8c9c6'
+                        });
+                        layer.closePopup();
+                    }
+                });
+                
+                layer.on('click', function(e) {
+                    // If clicking the same country, deselect it
+                    if (state.selectedLayer === layer) {
+                        layer.setStyle({
+                            weight: 0.5,
+                            opacity: 0.3,
+                            color: '#b8c9c6'
+                        });
+                        layer.closePopup();
+                        state.selectedLayer = null;
+                        return;
+                    }
+                    
+                    // Deselect previous selection
+                    if (state.selectedLayer) {
+                        state.heatmapLayer.resetStyle(state.selectedLayer);
+                        state.selectedLayer.closePopup();
+                    }
+                    
+                    // Highlight clicked country
+                    layer.setStyle({
+                        weight: 2,
+                        opacity: 0.9,
+                        color: '#2c5f4f'
+                    });
+                    layer.openPopup();
+                    
+                    state.selectedLayer = layer;
+                });
+            }
+        }).addTo(state.map);
+        
+        console.log('✓ Country overlay created');
+        
+    } catch (error) {
+        console.error('Error creating country overlay:', error);
+    } finally {
+        state.isLoading = false;
+    }
 }
 
 /**

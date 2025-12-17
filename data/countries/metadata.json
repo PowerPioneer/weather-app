@@ -1,0 +1,42 @@
+{
+  "source": "Natural Earth",
+  "dataset": "Admin-0 Countries",
+  "version": "10m (1:10 million scale)",
+  "license": "Public Domain",
+  "url": "https://www.naturalearthdata.com",
+  "commercial_use": true,
+  "downloaded_date": "2025-12-17",
+  "total_countries": 258,
+  "bounds": {
+    "west": -179.99999999999991,
+    "south": -89.99999999999994,
+    "east": 180.0,
+    "north": 83.63410065300008
+  },
+  "available_attributes": [
+    "name",
+    "NAME_LONG",
+    "ABBREV",
+    "iso_a2",
+    "ISO_A3",
+    "CONTINENT",
+    "REGION_UN",
+    "SUBREGION",
+    "geometry"
+  ],
+  "countries_by_continent": {
+    "Asia": 59,
+    "Africa": 55,
+    "Europe": 51,
+    "North America": 42,
+    "Oceania": 26,
+    "South America": 15,
+    "Seven seas (open ocean)": 9,
+    "Antarctica": 1
+  },
+  "files": {
+    "shapefile": "ne_10m_admin_0_countries.shp",
+    "geojson": "countries.geojson",
+    "metadata": "metadata.json"
+  }
+}

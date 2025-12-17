@@ -1,0 +1,46 @@
+{
+  "description": "Country-level aggregated climate data",
+  "source": "Aggregated from province-level data",
+  "variables": {
+    "tmin_mean": {
+      "description": "Mean minimum temperature",
+      "units": "\u00b0C"
+    },
+    "tmax_mean": {
+      "description": "Mean maximum temperature",
+      "units": "\u00b0C"
+    },
+    "prec_mean": {
+      "description": "Mean precipitation",
+      "units": "mm/day"
+    },
+    "sunhours_mean": {
+      "description": "Mean sunshine hours",
+      "units": "hours/day"
+    },
+    "temp_avg": {
+      "description": "Average temperature (mean of tmin and tmax)",
+      "units": "\u00b0C"
+    },
+    "overall_score": {
+      "description": "Overall climate score (0-1, higher is better)",
+      "units": "dimensionless"
+    }
+  },
+  "months": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+  ],
+  "format": "GeoJSON",
+  "created": "2024"
+}

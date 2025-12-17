@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 from app.data_loader import get_weather_for_location, get_grid_data
 from app.province_loader import get_province_data, get_province_data_for_variable, get_available_months
+from app.country_loader import get_country_data_for_variable, get_available_months as get_available_country_months
 
 main_bp = Blueprint('main', __name__)
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -297,4 +298,58 @@ def get_available_province_months():
         })
     except Exception as e:
         print(f"ERROR in /provinces/available: {e}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+@api_bp.route('/countries', methods=['GET'])
+def get_countries():
+    """Get country-level climate data for a specific month and variable."""
+    month = request.args.get('month')
+    variable = request.args.get('variable', 'overall')
+    
+    # Validate parameters
+    if not month:
+        return jsonify({
+            'error': 'Missing parameter: month required'
+        }), 400
+    
+    try:
+        month = int(month)
+        
+        if not (1 <= month <= 12):
+            return jsonify({'error': 'Month must be between 1 and 12'}), 400
+        
+        if variable not in ['temperature', 'rainfall', 'sunshine', 'overall']:
+            return jsonify({'error': 'Variable must be temperature, rainfall, sunshine, or overall'}), 400
+        
+        # Get country data
+        country_data = get_country_data_for_variable(month, variable)
+        
+        if not country_data:
+            return jsonify({'error': 'Country data not available for this month'}), 404
+        
+        return jsonify({
+            'month': month,
+            'variable': variable,
+            'data': country_data
+        })
+        
+    except (ValueError, TypeError) as e:
+        return jsonify({'error': f'Invalid parameter format: {str(e)}'}), 400
+    except Exception as e:
+        print(f"ERROR in /countries: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+@api_bp.route('/countries/available', methods=['GET'])
+def get_available_country_months_route():
+    """Get list of months for which country data is available."""
+    try:
+        available_months = get_available_country_months()
+        return jsonify({
+            'available_months': available_months,
+            'count': len(available_months)
+        })
+    except Exception as e:
+        print(f"ERROR in /countries/available: {e}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500
