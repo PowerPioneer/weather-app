@@ -12,7 +12,8 @@ def create_app():
     # Create Flask app with explicit paths
     app = Flask(__name__,
                 template_folder=os.path.join(basedir, 'templates'),
-                static_folder=os.path.join(basedir, 'static'))
+                static_folder=os.path.join(basedir, 'static'),
+                static_url_path='/static')
     
     # Load secret key from configuration
     try:
@@ -34,6 +35,20 @@ def create_app():
     ]
     app.config['COMPRESS_LEVEL'] = 6  # Balance between speed and compression (1-9)
     app.config['COMPRESS_MIN_SIZE'] = 500  # Only compress responses > 500 bytes
+    
+    # Configure static file caching and MIME types
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 year cache
+    
+    # Add response headers for proper static file serving
+    @app.after_request
+    def set_response_headers(response):
+        # Ensure CSS files are served with correct MIME type
+        if response.path and response.path.endswith('.css'):
+            response.headers['Content-Type'] = 'text/css; charset=utf-8'
+        # Ensure JavaScript files are served with correct MIME type
+        elif response.path and response.path.endswith('.js'):
+            response.headers['Content-Type'] = 'application/javascript; charset=utf-8'
+        return response
     
     # Enable CORS and Compression
     CORS(app)
