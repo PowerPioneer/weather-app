@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
 from flask_compress import Compress
 from app.config import get_flask_secret_key
@@ -42,11 +42,10 @@ def create_app():
     # Add response headers for proper static file serving
     @app.after_request
     def set_response_headers(response):
-        # Ensure CSS files are served with correct MIME type
-        if response.path and response.path.endswith('.css'):
+        # Use request.path instead of response.path
+        if request.path.endswith('.css'):
             response.headers['Content-Type'] = 'text/css; charset=utf-8'
-        # Ensure JavaScript files are served with correct MIME type
-        elif response.path and response.path.endswith('.js'):
+        elif request.path.endswith('.js'):
             response.headers['Content-Type'] = 'application/javascript; charset=utf-8'
         return response
     
