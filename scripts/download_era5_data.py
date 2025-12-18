@@ -6,9 +6,7 @@ ERA5 data is licensed under CC-BY 4.0 and free for commercial use.
 
 Before running:
 1. Register for a free account at https://cds.climate.copernicus.eu/
-2. Install CDS API key by creating ~/.cdsapirc (or %USERPROFILE%/.cdsapirc on Windows) with:
-   url: https://cds.climate.copernicus.eu/api/v2
-   key: YOUR_UID:YOUR_API_KEY
+2. Create keys/config.py with your CDS credentials (see keys/config.example.py for template)
 3. Install dependencies: pip install cdsapi
 
 Usage:
@@ -17,7 +15,13 @@ Usage:
 
 import cdsapi
 import os
+import sys
 from pathlib import Path
+
+# Add parent directory to path to import app config
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from app.config import get_cds_credentials
 
 def download_era5_monthly():
     """Download ERA5 monthly averaged reanalysis data."""
@@ -26,8 +30,15 @@ def download_era5_monthly():
     output_dir = Path(__file__).parent.parent / 'data' / 'era5' / 'raw'
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Initialize CDS API client
-    c = cdsapi.Client()
+    # Get CDS API credentials
+    try:
+        api_key = get_cds_credentials()
+    except ValueError as e:
+        print(f"\n✗ Configuration Error: {e}")
+        return False
+    
+    # Initialize CDS API client with credentials
+    c = cdsapi.Client(url='https://cds.climate.copernicus.eu/api/v2', key=api_key)
     
     # Years and months to download
     years = ['2020', '2021', '2022', '2023', '2024']
@@ -107,7 +118,7 @@ if __name__ == '__main__':
     success = download_era5_monthly()
     if not success:
         print("\n⚠ Download failed. Please check:")
-        print("  1. CDS API credentials are configured (~/.cdsapirc)")
+        print("  1. keys/config.py is created with valid CDS credentials")
         print("  2. You have accepted the ERA5 license terms on the CDS website")
         print("  3. Your internet connection is stable")
         exit(1)

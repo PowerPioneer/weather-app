@@ -42,6 +42,10 @@ env/
 .env.local
 .env.*.local
 
+# API Keys and Credentials (keep config.example.py only)
+keys/config.py
+keys/cdsapirc
+
 # Logs
 *.log
 logs/

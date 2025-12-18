@@ -50,8 +50,8 @@ All data processing scripts are located in the `scripts/` directory:
 - `process_era5_data.py` - Process ERA5 temperature and precipitation data
 - `process_cru_sunshine.py` - Convert CRU sunshine percentage to hours/day
 - `download_province_boundaries.py` - Download and prepare province boundaries
+- `download_country_boundaries.py` - Download and prepare country boundaries
 - `download_era5_data.py` - Download ERA5 data from ECMWF
-- `apply_land_mask.py` - Apply land mask to remove ocean values
 
 ## Citation
 

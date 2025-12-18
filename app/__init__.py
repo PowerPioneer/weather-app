@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from flask_cors import CORS
+from app.config import get_flask_secret_key
 
 def create_app():
     """Create and configure the Flask application."""
@@ -11,6 +12,14 @@ def create_app():
     app = Flask(__name__,
                 template_folder=os.path.join(basedir, 'templates'),
                 static_folder=os.path.join(basedir, 'static'))
+    
+    # Load secret key from configuration
+    try:
+        app.config['SECRET_KEY'] = get_flask_secret_key()
+    except ValueError as e:
+        # Use a default for development, but warn
+        print(f"Warning: {e}")
+        app.config['SECRET_KEY'] = 'dev-key-change-in-production'
     
     CORS(app)
     
