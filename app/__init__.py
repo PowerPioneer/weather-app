@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from flask_cors import CORS
+from flask_compress import Compress
 from app.config import get_flask_secret_key
 
 def create_app():
@@ -21,7 +22,22 @@ def create_app():
         print(f"Warning: {e}")
         app.config['SECRET_KEY'] = 'dev-key-change-in-production'
     
+    # Configure compression
+    app.config['COMPRESS_MIMETYPES'] = [
+        'text/html',
+        'text/css',
+        'text/xml',
+        'application/json',
+        'application/javascript',
+        'application/geo+json',
+        'text/javascript'
+    ]
+    app.config['COMPRESS_LEVEL'] = 6  # Balance between speed and compression (1-9)
+    app.config['COMPRESS_MIN_SIZE'] = 500  # Only compress responses > 500 bytes
+    
+    # Enable CORS and Compression
     CORS(app)
+    Compress(app)
     
     # Register blueprints
     from app.routes import main_bp, api_bp
