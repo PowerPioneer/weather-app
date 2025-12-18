@@ -182,7 +182,7 @@ function initializeMap() {
             touchZoom: true,          // Enable two-finger pinch zoom
             tap: true,                // Enable tap events
             tapTolerance: 15,         // Tap tolerance in pixels
-            scrollWheelZoom: false,   // Disable scroll wheel zoom
+            scrollWheelZoom: true,    // Enable scroll wheel zoom
             doubleClickZoom: true,    // Keep double-click zoom
             boxZoom: true,            // Keep box zoom
             keyboard: true            // Keep keyboard navigation
@@ -256,15 +256,19 @@ function onMapClick(e) {
     
     console.log('Location selected:', state.selectedLocation);
     
-    // Show weather details panel
-    const weatherPanel = document.getElementById('weatherDetailsPanel');
-    if (weatherPanel) {
-        weatherPanel.style.display = 'block';
-        
+    // Show weather details panel (overlay on desktop, section on mobile)
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const weatherPanelOverlay = document.getElementById('weatherDetailsPanelOverlay');
+    const weatherPanelSection = document.getElementById('weatherDetailsPanelSection');
+    
+    if (isMobile && weatherPanelSection) {
+        weatherPanelSection.style.display = 'block';
         // Auto-scroll to weather details on mobile
         setTimeout(() => {
-            weatherPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            weatherPanelSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
+    } else if (weatherPanelOverlay) {
+        weatherPanelOverlay.style.display = 'block';
     }
     
     // Fetch location name via reverse geocoding
@@ -283,12 +287,13 @@ function onMapClick(e) {
  * Fetch location name using Nominatim reverse geocoding
  */
 async function fetchLocationName(lat, lng) {
-    const countryName = document.getElementById('countryName');
-    const regionName = document.getElementById('regionName');
+    // Update both overlay and section elements
+    const countryNameElements = document.querySelectorAll('.country-name');
+    const regionNameElements = document.querySelectorAll('.region-name');
     
     // Show loading state
-    countryName.textContent = 'Loading...';
-    regionName.textContent = 'Loading...';
+    countryNameElements.forEach(el => el.textContent = 'Loading...');
+    regionNameElements.forEach(el => el.textContent = 'Loading...');
     
     try {
         const response = await fetch(
@@ -309,19 +314,19 @@ async function fetchLocationName(lat, lng) {
         
         // Get country
         const country = address.country || 'Unknown';
-        countryName.textContent = country;
+        countryNameElements.forEach(el => el.textContent = country);
         
         // Get province/state or city (in order of preference)
         const region = address.state || address.province || address.city || 
                        address.town || address.municipality || address.county || 'Unknown';
-        regionName.textContent = region;
+        regionNameElements.forEach(el => el.textContent = region);
         
         console.log('Location info:', { country, region, fullAddress: address });
         
     } catch (error) {
         console.error('Error fetching location name:', error);
-        countryName.textContent = 'Not available';
-        regionName.textContent = 'Not available';
+        countryNameElements.forEach(el => el.textContent = 'Not available');
+        regionNameElements.forEach(el => el.textContent = 'Not available');
     }
 }
 
@@ -706,8 +711,9 @@ function fetchWeatherData(lat, lng, month) {
         })
         .catch(error => {
             console.error('Error fetching weather data:', error);
-            const weatherInfo = document.getElementById('weatherInfo');
-            weatherInfo.innerHTML = `<p>⚠️ Error fetching data</p>`;
+            document.querySelectorAll('.weather-info').forEach(el => {
+                el.innerHTML = `<p>⚠️ Error fetching data</p>`;
+            });
         });
 }
 
@@ -722,19 +728,24 @@ let weatherCharts = {
  * Display weather information as charts
  */
 function displayWeatherCharts(data, currentMonth) {
-    const weatherInfo = document.getElementById('weatherInfo');
+    // Update both overlay and section weather info containers
+    const weatherInfoContainers = document.querySelectorAll('.weather-info');
     
     if (data.error) {
-        weatherInfo.innerHTML = `<p>⚠️ ${data.error}</p>`;
+        weatherInfoContainers.forEach(container => {
+            container.innerHTML = `<p>⚠️ ${data.error}</p>`;
+        });
         return;
     }
     
     if (!data.data) {
-        weatherInfo.innerHTML = `
-            <p style="margin-top: 1rem; font-size: 0.85rem; color: #999;">
-                No data available for this location
-            </p>
-        `;
+        weatherInfoContainers.forEach(container => {
+            container.innerHTML = `
+                <p style="margin-top: 1rem; font-size: 0.85rem; color: #999;">
+                    No data available for this location
+                </p>
+            `;
+        });
         return;
     }
     
@@ -752,29 +763,34 @@ function displayWeatherCharts(data, currentMonth) {
         ? data.data.tmin.map(t => celsiusToFahrenheit(t))
         : data.data.tmin;
     
-    // Create HTML structure for charts
-    weatherInfo.innerHTML = `
+    // Create HTML structure for charts in both containers
+    const chartHTML = `
         <div style="padding: 1rem 0;">
             <div style="margin-bottom: 1.5rem;">
                 <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">🌡️ Temperature</h4>
-                <canvas id="tempChart" style="max-height: 150px;"></canvas>
+                <canvas class="temp-chart" style="max-height: 150px;"></canvas>
             </div>
             <div style="margin-bottom: 1.5rem;">
                 <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">🌧️ Rainfall</h4>
-                <canvas id="rainChart" style="max-height: 120px;"></canvas>
+                <canvas class="rain-chart" style="max-height: 120px;"></canvas>
             </div>
             <div style="margin-bottom: 0.5rem;">
                 <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">☀️ Sunshine</h4>
-                <canvas id="sunChart" style="max-height: 120px;"></canvas>
+                <canvas class="sun-chart" style="max-height: 120px;"></canvas>
             </div>
         </div>
     `;
     
+    weatherInfoContainers.forEach(container => {
+        container.innerHTML = chartHTML;
+    });
+    
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
-    // Temperature line chart
-    const tempCtx = document.getElementById('tempChart').getContext('2d');
-    weatherCharts.temperature = new Chart(tempCtx, {
+    // Create charts for all canvases
+    document.querySelectorAll('.temp-chart').forEach(canvas => {
+        const tempCtx = canvas.getContext('2d');
+        new Chart(tempCtx, {
         type: 'line',
         data: {
             labels: months,
@@ -834,10 +850,12 @@ function displayWeatherCharts(data, currentMonth) {
             }
         }
     });
+    });
     
     // Rainfall bar chart
-    const rainCtx = document.getElementById('rainChart').getContext('2d');
-    weatherCharts.rainfall = new Chart(rainCtx, {
+    document.querySelectorAll('.rain-chart').forEach(canvas => {
+        const rainCtx = canvas.getContext('2d');
+        new Chart(rainCtx, {
         type: 'bar',
         data: {
             labels: months,
@@ -877,10 +895,12 @@ function displayWeatherCharts(data, currentMonth) {
             }
         }
     });
+    });
     
     // Sunshine bar chart
-    const sunCtx = document.getElementById('sunChart').getContext('2d');
-    weatherCharts.sunshine = new Chart(sunCtx, {
+    document.querySelectorAll('.sun-chart').forEach(canvas => {
+        const sunCtx = canvas.getContext('2d');
+        new Chart(sunCtx, {
         type: 'bar',
         data: {
             labels: months,
@@ -919,6 +939,7 @@ function displayWeatherCharts(data, currentMonth) {
                 }
             }
         }
+    });
     });
 }
 
@@ -1673,22 +1694,28 @@ async function createProvinceOverlay() {
                             name: props.name || `${lat}, ${lng}`
                         };
                         
-                        // Show weather details panel
-                        const weatherPanel = document.getElementById('weatherDetailsPanel');
-                        if (weatherPanel) {
-                            weatherPanel.style.display = 'block';
-                            
+                        // Show weather details panel (overlay on desktop, section on mobile)
+                        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+                        const weatherPanelOverlay = document.getElementById('weatherDetailsPanelOverlay');
+                        const weatherPanelSection = document.getElementById('weatherDetailsPanelSection');
+                        
+                        if (isMobile && weatherPanelSection) {
+                            weatherPanelSection.style.display = 'block';
                             // Auto-scroll to weather details on mobile
                             setTimeout(() => {
-                                weatherPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                weatherPanelSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }, 100);
+                        } else if (weatherPanelOverlay) {
+                            weatherPanelOverlay.style.display = 'block';
                         }
                         
-                        // Update location info in panel
-                        const countryName = document.getElementById('countryName');
-                        const regionName = document.getElementById('regionName');
-                        if (countryName) countryName.textContent = props.admin || 'Unknown';
-                        if (regionName) regionName.textContent = props.name || 'Unknown';
+                        // Update location info in both panels
+                        document.querySelectorAll('.country-name').forEach(el => {
+                            el.textContent = props.admin || 'Unknown';
+                        });
+                        document.querySelectorAll('.region-name').forEach(el => {
+                            el.textContent = props.name || 'Unknown';
+                        });
                         
                         // Fetch weather data for province center
                         if (state.selectedMonth) {

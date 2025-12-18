@@ -8,6 +8,7 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
+    touch-action: pan-y; /* Prevent double-tap zoom and pinch zoom on page */
 }
 
 body {
@@ -140,6 +141,7 @@ main {
     background: #f5f9f8;
     position: relative;
     z-index: 1;
+    touch-action: manipulation; /* Allow map to handle touch events */
 }
 
 /* Climate Preferences Sidebar (left side, collapsible) */
@@ -432,7 +434,7 @@ main {
     border-color: #4a7d78;
 }
 
-/* Weather Details Overlay (right side) */
+/* Weather Details Overlay (right side) - Desktop only */
 .weather-details-overlay {
     position: absolute;
     top: 20px;
@@ -446,9 +448,10 @@ main {
     max-width: 320px;
     max-height: calc(100vh - 140px);
     overflow-y: auto;
+    display: block; /* Show on desktop */
 }
 
-/* Weather Details Section (below map) */
+/* Weather Details Section (below map) - Mobile only */
 .weather-details-section {
     background: rgba(255, 255, 255, 0.95);
     padding: 1.5rem;
@@ -457,6 +460,7 @@ main {
     backdrop-filter: blur(10px);
     max-width: 100%;
     position: relative;
+    display: none; /* Hidden on desktop by default */
 }
 
 .weather-details-section h2,
@@ -549,20 +553,46 @@ svg path {
 /* Responsive Design */
 @media (max-width: 768px) {
     /* Header adjustments */
-    .header-content {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
+    header {
+        padding: 1rem 1.5rem;
     }
     
-    .header-left,
-    .header-center,
-    .header-right {
+    .header-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        gap: 0.5rem;
+    }
+    
+    .header-left {
+        grid-column: 1;
+        grid-row: 2;
+        justify-self: center;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .header-center {
+        grid-column: 1;
+        grid-row: 1;
         justify-self: center;
         text-align: center;
     }
     
+    .header-right {
+        grid-column: 1;
+        grid-row: 2;
+        justify-self: end;
+        position: absolute;
+        right: 1.5rem;
+    }
+    
     header h1 {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
+    }
+    
+    header p {
+        font-size: 0.85rem;
     }
     
     /* Map container - dynamic height based on header */
@@ -620,8 +650,14 @@ svg path {
         display: none;
     }
     
-    /* Weather details as full-width section below map */
+    /* Hide overlay on mobile */
+    .weather-details-overlay {
+        display: none !important;
+    }
+    
+    /* Show weather section on mobile */
     .weather-details-section {
+        display: block;
         position: relative;
         width: 100%;
         max-width: 100%;

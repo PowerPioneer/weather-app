@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Where to Go for Great Weather</title>
     
     <!-- Leaflet CSS -->
@@ -135,19 +135,34 @@
                 <div class="info-message-overlay">
                     Click on a spot on the map to see local climate information
                 </div>
-            </div>
-            
-            <!-- Weather details section (below map on mobile) -->
-            <section class="weather-details-section" id="weatherDetailsPanel" style="display: none;">
-                <button class="close-btn" onclick="document.getElementById('weatherDetailsPanel').style.display='none'">&times;</button>
-                <h2>Climate Information</h2>
-                <div id="locationInfo" style="margin-bottom: 1rem;">
-                    <div id="locationDetails" style="margin-top: 0.5rem; font-size: 0.9rem;">
-                        <p><strong>Country:</strong> <span id="countryName">-</span></p>
-                        <p><strong>Region:</strong> <span id="regionName">-</span></p>
+                
+                <!-- Weather details overlay (right side) - Desktop only -->
+                <div class="weather-details-overlay" id="weatherDetailsPanelOverlay" style="display: none;">
+                    <button class="close-btn" onclick="document.getElementById('weatherDetailsPanelOverlay').style.display='none'">&times;</button>
+                    <h2>Climate Information</h2>
+                    <div id="locationInfoOverlay" style="margin-bottom: 1rem;">
+                        <div id="locationDetailsOverlay" style="margin-top: 0.5rem; font-size: 0.9rem;">
+                            <p><strong>Country:</strong> <span class="country-name">-</span></p>
+                            <p><strong>Region:</strong> <span class="region-name">-</span></p>
+                        </div>
+                    </div>
+                    <div class="weather-info">
+                        <p>Loading weather information...</p>
                     </div>
                 </div>
-                <div id="weatherInfo">
+            </div>
+            
+            <!-- Weather details section (below map) - Mobile only -->
+            <section class="weather-details-section" id="weatherDetailsPanelSection" style="display: none;">
+                <button class="close-btn" onclick="document.getElementById('weatherDetailsPanelSection').style.display='none'">&times;</button>
+                <h2>Climate Information</h2>
+                <div id="locationInfoSection" style="margin-bottom: 1rem;">
+                    <div id="locationDetailsSection" style="margin-top: 0.5rem; font-size: 0.9rem;">
+                        <p><strong>Country:</strong> <span class="country-name">-</span></p>
+                        <p><strong>Region:</strong> <span class="region-name">-</span></p>
+                    </div>
+                </div>
+                <div class="weather-info">
                     <p>Loading weather information...</p>
                 </div>
             </section>
