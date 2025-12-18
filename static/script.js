@@ -104,6 +104,17 @@ const layerConfig = {
     }
 };
 
+/**
+ * Calculate and set dynamic header height for mobile layout
+ */
+function setDynamicHeaderHeight() {
+    const header = document.querySelector('header');
+    if (header) {
+        const headerHeight = header.offsetHeight;
+        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== Where to go for great weather Initialization ===');
     console.log('1. DOM loaded');
@@ -116,6 +127,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('ERROR: Map element not found!');
         return;
     }
+    
+    // Set dynamic header height for mobile
+    setDynamicHeaderHeight();
     
     const computedStyle = window.getComputedStyle(mapElement);
     console.log('4. Map element dimensions:', {
@@ -148,6 +162,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('7. Loading initial heatmap...');
         updateMapLayers();
     }, 500);
+    
+    // Recalculate header height on window resize
+    window.addEventListener('resize', setDynamicHeaderHeight);
 });
 
 /**
@@ -155,8 +172,21 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initializeMap() {
     try {
-        // Create map centered on world view
-        state.map = L.map('map').setView([20, 0], 3);
+        // Detect if device is mobile
+        const isMobile = window.matchMedia('(max-width: 768px)').matches || ('ontouchstart' in window);
+        
+        // Create map centered on world view with mobile-specific options
+        state.map = L.map('map', {
+            zoomControl: !isMobile,  // Disable zoom controls on mobile
+            dragging: !isMobile,      // Disable single-finger drag on mobile
+            touchZoom: true,          // Enable two-finger pinch zoom
+            tap: true,                // Enable tap events
+            tapTolerance: 15,         // Tap tolerance in pixels
+            scrollWheelZoom: false,   // Disable scroll wheel zoom
+            doubleClickZoom: true,    // Keep double-click zoom
+            boxZoom: true,            // Keep box zoom
+            keyboard: true            // Keep keyboard navigation
+        }).setView([20, 0], 3);
         
         // Add OpenStreetMap tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -198,6 +228,23 @@ function initializeMap() {
  * Handle map click events
  */
 function onMapClick(e) {
+    // Check if this is a click on the base map (not a province/country)
+    // If there's a selected layer and user clicks empty map area, deselect it
+    if (state.selectedLayer && e.originalEvent && e.originalEvent.target.classList.contains('leaflet-container')) {
+        // Reset the selected layer style
+        if (state.heatmapLayer) {
+            state.heatmapLayer.resetStyle(state.selectedLayer);
+        }
+        state.selectedLayer = null;
+        
+        // Hide weather details panel
+        const weatherPanel = document.getElementById('weatherDetailsPanel');
+        if (weatherPanel) {
+            weatherPanel.style.display = 'none';
+        }
+        return;
+    }
+    
     const lat = e.latlng.lat.toFixed(4);
     const lng = e.latlng.lng.toFixed(4);
     
@@ -213,6 +260,11 @@ function onMapClick(e) {
     const weatherPanel = document.getElementById('weatherDetailsPanel');
     if (weatherPanel) {
         weatherPanel.style.display = 'block';
+        
+        // Auto-scroll to weather details on mobile
+        setTimeout(() => {
+            weatherPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     }
     
     // Fetch location name via reverse geocoding
@@ -369,13 +421,47 @@ function initializeEventListeners() {
     updateRangeSlider('rain', rainMin, rainMax);
     updateRangeSlider('sun', sunMin, sunMax);
     
-    // Preferences toggle
+    // Preferences toggle with overlay
     const preferencesToggle = document.getElementById('preferencesToggle');
     const preferencesSidebar = document.querySelector('.climate-preferences-sidebar');
+    const preferencesOverlay = document.getElementById('preferencesOverlay');
+    const preferencesCloseBtn = document.getElementById('preferencesCloseBtn');
     
-    preferencesToggle.addEventListener('click', () => {
-        preferencesSidebar.classList.toggle('collapsed');
+    function openPreferences() {
+        preferencesSidebar.classList.remove('collapsed');
+        if (preferencesOverlay) {
+            preferencesOverlay.classList.add('active');
+        }
+    }
+    
+    function closePreferences() {
+        preferencesSidebar.classList.add('collapsed');
+        if (preferencesOverlay) {
+            preferencesOverlay.classList.remove('active');
+        }
+    }
+    
+    preferencesToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (preferencesSidebar.classList.contains('collapsed')) {
+            openPreferences();
+        } else {
+            closePreferences();
+        }
     });
+    
+    // Close preferences when clicking overlay
+    if (preferencesOverlay) {
+        preferencesOverlay.addEventListener('click', closePreferences);
+    }
+    
+    // Close preferences with close button
+    if (preferencesCloseBtn) {
+        preferencesCloseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closePreferences();
+        });
+    }
     
     // Temperature unit toggle buttons
     const tempUnitButtons = document.querySelectorAll('.temp-unit-btn');
@@ -1591,6 +1677,11 @@ async function createProvinceOverlay() {
                         const weatherPanel = document.getElementById('weatherDetailsPanel');
                         if (weatherPanel) {
                             weatherPanel.style.display = 'block';
+                            
+                            // Auto-scroll to weather details on mobile
+                            setTimeout(() => {
+                                weatherPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 100);
                         }
                         
                         // Update location info in panel

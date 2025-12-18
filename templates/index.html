@@ -45,10 +45,14 @@
             <div class="map-container-fullscreen">
                 <div id="map" class="map"></div>
                 
+                <!-- Transparent overlay for preferences panel backdrop -->
+                <div class="preferences-overlay" id="preferencesOverlay"></div>
+                
                 <!-- Climate Preferences Sidebar (left side, collapsible) -->
                 <div class="climate-preferences-sidebar collapsed">
+                    <button class="close-btn preferences-close-btn" id="preferencesCloseBtn">&times;</button>
                     <button class="preferences-toggle" id="preferencesToggle">
-                        <span class="toggle-icon">⚙️</span>
+                        <span class="toggle-icon">☰</span>
                         <span class="toggle-text">Climate Preferences</span>
                     </button>
                     
@@ -131,22 +135,22 @@
                 <div class="info-message-overlay">
                     Click on a spot on the map to see local climate information
                 </div>
-
-                <!-- Weather details panel (right side, hidden by default) -->
-                <div class="weather-details-overlay" id="weatherDetailsPanel" style="display: none;">
-                    <button class="close-btn" onclick="document.getElementById('weatherDetailsPanel').style.display='none'">&times;</button>
-                    <h2>Climate Information</h2>
-                    <div id="locationInfo" style="margin-bottom: 1rem;">
-                        <div id="locationDetails" style="margin-top: 0.5rem; font-size: 0.9rem;">
-                            <p><strong>Country:</strong> <span id="countryName">-</span></p>
-                            <p><strong>Region:</strong> <span id="regionName">-</span></p>
-                        </div>
-                    </div>
-                    <div id="weatherInfo">
-                        <p>Loading weather information...</p>
+            </div>
+            
+            <!-- Weather details section (below map on mobile) -->
+            <section class="weather-details-section" id="weatherDetailsPanel" style="display: none;">
+                <button class="close-btn" onclick="document.getElementById('weatherDetailsPanel').style.display='none'">&times;</button>
+                <h2>Climate Information</h2>
+                <div id="locationInfo" style="margin-bottom: 1rem;">
+                    <div id="locationDetails" style="margin-top: 0.5rem; font-size: 0.9rem;">
+                        <p><strong>Country:</strong> <span id="countryName">-</span></p>
+                        <p><strong>Region:</strong> <span id="regionName">-</span></p>
                     </div>
                 </div>
-            </div>
+                <div id="weatherInfo">
+                    <p>Loading weather information...</p>
+                </div>
+            </section>
         </main>
     </div>
 
