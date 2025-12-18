@@ -157,10 +157,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load initial data
     loadRegions();
     
-    // Load initial heatmap after a short delay to ensure map is ready
+    // Load initial country overlay after a short delay to ensure map is ready
     setTimeout(() => {
-        console.log('7. Loading initial heatmap...');
-        updateMapLayers();
+        console.log('7. Loading initial country overlay...');
+        // Force country data on initial load
+        createCountryOverlay();
     }, 500);
     
     // Recalculate header height on window resize
@@ -175,6 +176,9 @@ function initializeMap() {
         // Detect if device is mobile
         const isMobile = window.matchMedia('(max-width: 768px)').matches || ('ontouchstart' in window);
         
+        // Set zoom level based on device - mobile needs wider view
+        const initialZoom = isMobile ? 2 : 3;
+        
         // Create map centered on world view with mobile-specific options
         state.map = L.map('map', {
             zoomControl: !isMobile,  // Disable zoom controls on mobile
@@ -186,7 +190,7 @@ function initializeMap() {
             doubleClickZoom: true,    // Keep double-click zoom
             boxZoom: true,            // Keep box zoom
             keyboard: true            // Keep keyboard navigation
-        }).setView([20, 0], 3);
+        }).setView([20, 0], initialZoom);
         
         // Add OpenStreetMap tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
