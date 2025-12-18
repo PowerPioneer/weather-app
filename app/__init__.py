@@ -37,7 +37,7 @@ def create_app():
     app.config['COMPRESS_MIN_SIZE'] = 500  # Only compress responses > 500 bytes
     
     # Configure static file caching and MIME types
-    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 year cache
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # No cache during development
     
     # Add response headers for proper static file serving
     @app.after_request
@@ -45,8 +45,14 @@ def create_app():
         # Use request.path instead of response.path
         if request.path.endswith('.css'):
             response.headers['Content-Type'] = 'text/css; charset=utf-8'
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
         elif request.path.endswith('.js'):
             response.headers['Content-Type'] = 'application/javascript; charset=utf-8'
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
         return response
     
     # Enable CORS and Compression
