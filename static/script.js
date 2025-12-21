@@ -1456,15 +1456,24 @@ async function createCountryOverlay() {
                 });
                 
                 layer.on('click', function(e) {
+                    const currentLayer = e.target;
+                    const props = currentLayer.feature.properties;
+                    
                     // If clicking the same country, deselect it
-                    if (state.selectedLayer === layer) {
-                        layer.setStyle({
+                    if (state.selectedLayer === currentLayer) {
+                        currentLayer.setStyle({
                             weight: 0.5,
                             opacity: 0.3,
                             color: '#b8c9c6'
                         });
-                        layer.closePopup();
+                        currentLayer.closePopup();
                         state.selectedLayer = null;
+                        
+                        // Hide weather details panel
+                        const weatherPanel = document.getElementById('weatherDetailsPanel');
+                        if (weatherPanel) {
+                            weatherPanel.style.display = 'none';
+                        }
                         return;
                     }
                     
@@ -1475,14 +1484,55 @@ async function createCountryOverlay() {
                     }
                     
                     // Highlight clicked country
-                    layer.setStyle({
+                    currentLayer.setStyle({
                         weight: 2,
                         opacity: 0.9,
                         color: '#2c5f4f'
                     });
-                    layer.openPopup();
+                    currentLayer.openPopup();
                     
-                    state.selectedLayer = layer;
+                    state.selectedLayer = currentLayer;
+                    
+                    // Get country center for weather data
+                    const bounds = currentLayer.getBounds();
+                    const center = bounds.getCenter();
+                    const lat = center.lat.toFixed(4);
+                    const lng = center.lng.toFixed(4);
+                    
+                    // Store selected location
+                    state.selectedLocation = {
+                        lat: lat,
+                        lng: lng,
+                        name: props.name || `${lat}, ${lng}`
+                    };
+                    
+                    // Show weather details panel (overlay on desktop, section on mobile)
+                    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+                    const weatherPanelOverlay = document.getElementById('weatherDetailsPanelOverlay');
+                    const weatherPanelSection = document.getElementById('weatherDetailsPanelSection');
+                    
+                    if (isMobile && weatherPanelSection) {
+                        weatherPanelSection.style.display = 'block';
+                        // Auto-scroll to weather details on mobile
+                        setTimeout(() => {
+                            weatherPanelSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 100);
+                    } else if (weatherPanelOverlay) {
+                        weatherPanelOverlay.style.display = 'block';
+                    }
+                    
+                    // Update location info in both panels (country only, no region)
+                    document.querySelectorAll('.country-name').forEach(el => {
+                        el.textContent = props.name || 'Unknown';
+                    });
+                    document.querySelectorAll('.region-name').forEach(el => {
+                        el.textContent = '';  // No region for countries
+                    });
+                    
+                    // Fetch weather data for country center
+                    if (state.selectedMonth) {
+                        fetchWeatherData(lat, lng, state.selectedMonth);
+                    }
                 });
             }
         }).addTo(state.map);
