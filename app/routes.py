@@ -34,7 +34,21 @@ def load_weather_data():
 @main_bp.route('/')
 def index():
     """Render the main application page."""
-    return render_template('index.html')
+    # Get current month (1-12)
+    from datetime import datetime
+    current_month = datetime.now().month
+    
+    # Preload country data for current month to speed up initial load
+    # This embeds the data directly in HTML, avoiding the first API call
+    initial_country_data = get_country_data_for_variable(current_month, 'overall')
+    
+    # Convert to JSON string for embedding in script tag
+    import json
+    initial_data_json = json.dumps(initial_country_data) if initial_country_data else 'null'
+    
+    return render_template('index.html', 
+                         current_month=current_month,
+                         initial_country_data=initial_data_json)
 
 @main_bp.route('/about')
 def about():
@@ -252,6 +266,12 @@ def get_provinces():
     month = request.args.get('month')
     variable = request.args.get('variable', 'overall')
     
+    # Optional viewport bounds for filtering
+    north = request.args.get('north')
+    south = request.args.get('south')
+    east = request.args.get('east')
+    west = request.args.get('west')
+    
     # Validate parameters
     if not month:
         return jsonify({
@@ -267,17 +287,34 @@ def get_provinces():
         if variable not in ['temperature', 'rainfall', 'sunshine', 'overall']:
             return jsonify({'error': 'Variable must be temperature, rainfall, sunshine, or overall'}), 400
         
-        # Get province data
-        province_data = get_province_data_for_variable(month, variable)
+        # Parse bounds if provided
+        bounds = None
+        if all([north, south, east, west]):
+            bounds = {
+                'north': float(north),
+                'south': float(south),
+                'east': float(east),
+                'west': float(west)
+            }
+        
+        # Get province data with optional viewport filtering
+        province_data = get_province_data_for_variable(month, variable, bounds)
         
         if not province_data:
             return jsonify({'error': 'Province data not available for this month'}), 404
         
-        return jsonify({
+        response_data = {
             'month': month,
             'variable': variable,
             'data': province_data
-        })
+        }
+        
+        # Add debug info about filtering
+        if bounds:
+            response_data['filtered'] = True
+            response_data['feature_count'] = len(province_data.get('features', []))
+        
+        return jsonify(response_data)
         
     except (ValueError, TypeError) as e:
         return jsonify({'error': f'Invalid parameter format: {str(e)}'}), 400
@@ -306,6 +343,12 @@ def get_countries():
     month = request.args.get('month')
     variable = request.args.get('variable', 'overall')
     
+    # Optional viewport bounds for filtering
+    north = request.args.get('north')
+    south = request.args.get('south')
+    east = request.args.get('east')
+    west = request.args.get('west')
+    
     # Validate parameters
     if not month:
         return jsonify({
@@ -321,17 +364,34 @@ def get_countries():
         if variable not in ['temperature', 'rainfall', 'sunshine', 'overall']:
             return jsonify({'error': 'Variable must be temperature, rainfall, sunshine, or overall'}), 400
         
-        # Get country data
-        country_data = get_country_data_for_variable(month, variable)
+        # Parse bounds if provided
+        bounds = None
+        if all([north, south, east, west]):
+            bounds = {
+                'north': float(north),
+                'south': float(south),
+                'east': float(east),
+                'west': float(west)
+            }
+        
+        # Get country data with optional viewport filtering
+        country_data = get_country_data_for_variable(month, variable, bounds)
         
         if not country_data:
             return jsonify({'error': 'Country data not available for this month'}), 404
         
-        return jsonify({
+        response_data = {
             'month': month,
             'variable': variable,
             'data': country_data
-        })
+        }
+        
+        # Add debug info about filtering
+        if bounds:
+            response_data['filtered'] = True
+            response_data['feature_count'] = len(country_data.get('features', []))
+        
+        return jsonify(response_data)
         
     except (ValueError, TypeError) as e:
         return jsonify({'error': f'Invalid parameter format: {str(e)}'}), 400

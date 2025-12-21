@@ -30,11 +30,11 @@ const state = {
     lastFetchBounds: null,  // Track last fetched bounds
     preferences: {
         tempMin: 18,
-        tempMax: 28,
+        tempMax: 30,
         rainMin: 0,
-        rainMax: 3,
+        rainMax: 4,
         sunMin: 6,
-        sunMax: 12
+        sunMax: 15
     }
 };
 
@@ -1281,12 +1281,33 @@ async function createCountryOverlay() {
         const cacheKey = `country_month_${month}`;
         let geojsonData;
         
-        if (state[cacheKey]) {
+        // Check for preloaded data first (only on initial load)
+        if (window.PRELOADED_COUNTRY_DATA && 
+            window.PRELOADED_COUNTRY_DATA.month === month && 
+            window.PRELOADED_COUNTRY_DATA.data &&
+            !state[cacheKey]) {
+            console.log('Using preloaded country data from HTML');
+            geojsonData = window.PRELOADED_COUNTRY_DATA.data;
+            // Cache it and clear the preloaded data
+            state[cacheKey] = geojsonData;
+            window.PRELOADED_COUNTRY_DATA = null;  // Free memory
+        } else if (state[cacheKey]) {
             console.log('Using cached country data');
             geojsonData = state[cacheKey];
         } else {
-            // Fetch country data from API
-            const url = `/api/countries?month=${month}&variable=${variable}`;
+            // Get current viewport bounds for filtering
+            const bounds = state.map.getBounds();
+            const mapBounds = {
+                north: bounds.getNorth(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                west: bounds.getWest()
+            };
+            
+            // Fetch country data from API with viewport bounds
+            const url = `/api/countries?month=${month}&variable=${variable}&` +
+                       `north=${mapBounds.north}&south=${mapBounds.south}&` +
+                       `east=${mapBounds.east}&west=${mapBounds.west}`;
             console.log(`Fetching country data: ${url}`);
             
             const response = await fetch(url);
@@ -1299,7 +1320,14 @@ async function createCountryOverlay() {
             }
             
             geojsonData = result.data;
-            // Cache the data
+            
+            // Log filtering stats if available
+            if (result.filtered) {
+                console.log(`Viewport filtering: ${result.feature_count} countries in view`);
+            }
+            
+            // Cache the data (note: caching filtered data means it won't work for different viewports)
+            // TODO: Consider viewport-aware caching strategy
             state[cacheKey] = geojsonData;
         }
         
@@ -1381,7 +1409,7 @@ async function createCountryOverlay() {
                 let valueStr = 'No data';
                 if (value !== null && value !== undefined) {
                     if (variable === 'overall') {
-                        valueStr = `Score: ${(value * 100).toFixed(0)}%`;
+                        valueStr = `Match: ${(value * 100).toFixed(0)}%`;
                     } else if (variable === 'temperature') {
                         const tempC = value;
                         const tempF = (tempC * 9/5) + 32;
@@ -1494,8 +1522,19 @@ async function createProvinceOverlay() {
             console.log('Using cached province data');
             geojsonData = state[cacheKey];
         } else {
-            // Fetch province data from API
-            const url = `/api/provinces?month=${month}&variable=${variable}`;
+            // Get current viewport bounds for filtering
+            const bounds = state.map.getBounds();
+            const mapBounds = {
+                north: bounds.getNorth(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                west: bounds.getWest()
+            };
+            
+            // Fetch province data from API with viewport bounds
+            const url = `/api/provinces?month=${month}&variable=${variable}&` +
+                       `north=${mapBounds.north}&south=${mapBounds.south}&` +
+                       `east=${mapBounds.east}&west=${mapBounds.west}`;
             console.log(`Fetching province data: ${url}`);
             
             const response = await fetch(url);
@@ -1508,7 +1547,14 @@ async function createProvinceOverlay() {
             }
             
             geojsonData = result.data;
-            // Cache the data
+            
+            // Log filtering stats if available
+            if (result.filtered) {
+                console.log(`Viewport filtering: ${result.feature_count} provinces in view`);
+            }
+            
+            // Cache the data (note: caching filtered data means it won't work for different viewports)
+            // TODO: Consider viewport-aware caching strategy
             state[cacheKey] = geojsonData;
         }
         

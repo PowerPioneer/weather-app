@@ -45,13 +45,57 @@ def get_country_data(month):
         print(f"Error loading country data for month {month}: {e}")
         return None
 
-def get_country_data_for_variable(month, variable):
+def filter_by_bounds(geojson_data, north, south, east, west):
     """
-    Get country data filtered for a specific variable.
+    Filter GeoJSON features by bounding box.
+    
+    Args:
+        geojson_data: GeoJSON dict with features
+        north, south, east, west: Bounding box coordinates
+    
+    Returns:
+        Filtered GeoJSON dict
+    """
+    if not geojson_data or 'features' not in geojson_data:
+        return geojson_data
+    
+    filtered_features = []
+    
+    for feature in geojson_data['features']:
+        if 'geometry' not in feature or not feature['geometry']:
+            continue
+            
+        geometry = feature['geometry']
+        
+        # Check if geometry intersects with bounds
+        # For simplicity, check if any coordinate is within bounds
+        if geometry['type'] == 'Polygon':
+            coords = geometry['coordinates'][0]  # Outer ring
+        elif geometry['type'] == 'MultiPolygon':
+            coords = geometry['coordinates'][0][0]  # First polygon, outer ring
+        else:
+            continue
+        
+        # Check if any point in the geometry is within bounds
+        for coord in coords:
+            lon, lat = coord[0], coord[1]
+            if south <= lat <= north and west <= lon <= east:
+                filtered_features.append(feature)
+                break
+    
+    return {
+        'type': 'FeatureCollection',
+        'features': filtered_features
+    }
+
+def get_country_data_for_variable(month, variable, bounds=None):
+    """
+    Get country data filtered for a specific variable and optional bounding box.
     
     Args:
         month: Month number (1-12)
         variable: 'temperature', 'rainfall', 'sunshine', or 'overall'
+        bounds: Optional dict with 'north', 'south', 'east', 'west' keys
     
     Returns:
         GeoJSON dict with relevant data field
@@ -73,6 +117,16 @@ def get_country_data_for_variable(month, variable):
     
     if not data_field:
         return None
+    
+    # Apply viewport filtering if bounds provided
+    if bounds:
+        data = filter_by_bounds(
+            data,
+            bounds.get('north'),
+            bounds.get('south'),
+            bounds.get('east'),
+            bounds.get('west')
+        )
     
     # Return full GeoJSON (frontend will extract the needed field)
     return data
