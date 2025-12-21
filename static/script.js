@@ -1400,7 +1400,7 @@ async function createCountryOverlay() {
                 // Bind popup
                 layer.bindPopup(
                     `<strong>${countryName}</strong><br>${valueStr}`,
-                    { closeButton: false }
+                    { closeButton: false, autoPan: false }
                 );
                 
                 // Add hover and click highlighting
