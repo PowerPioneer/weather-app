@@ -55,6 +55,16 @@ def about():
     """Render the about page."""
     return render_template('about.html')
 
+@main_bp.route('/privacy')
+def privacy():
+    """Render the privacy policy page."""
+    return render_template('privacy.html')
+
+@main_bp.route('/terms')
+def terms():
+    """Render the terms of service page."""
+    return render_template('terms.html')
+
 @api_bp.route('/weather', methods=['GET'])
 def get_weather():
     """Get weather data for a specific location and month."""
