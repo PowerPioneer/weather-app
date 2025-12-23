@@ -9,6 +9,9 @@ html, body {
     margin: 0;
     padding: 0;
     touch-action: pan-y; /* Prevent double-tap zoom and pinch zoom on page */
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
 }
 
 body {
@@ -28,6 +31,12 @@ header {
     color: #ffffff;
     padding: 1.25rem 2rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+    min-height: fit-content;
 }
 
 .header-content {
@@ -53,6 +62,14 @@ header {
     align-items: center;
     grid-column: 2;
     justify-self: center;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    grid-column: 3;
+    justify-self: end;
+    position: relative;
 }
 
 header h1 {
@@ -98,13 +115,93 @@ header p {
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
+/* Hamburger Menu */
+.hamburger-menu {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 1001;
+}
+
+.hamburger-menu span {
+    display: block;
+    width: 28px;
+    height: 3px;
+    background-color: #ffffff;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.hamburger-menu:hover span {
+    background-color: #b8d4d0;
+}
+
+.hamburger-menu.active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger-menu.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 1rem);
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-link {
+    display: block;
+    color: #2c3e3b;
+    text-decoration: none;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.dropdown-link:last-child {
+    border-bottom: none;
+}
+
+.dropdown-link:hover {
+    background-color: #f0f4f3;
+}
+
 main {
     padding: 0;
     margin: 0;
-    height: calc(100vh - 80px);
+    height: 100vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    padding-top: 85px;
 }
 
 .map-container-fullscreen {
@@ -370,7 +467,7 @@ main {
 /* Info Message Overlay (bottom center) */
 .info-message-overlay {
     position: absolute;
-    bottom: 60px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(255, 255, 255, 0.95);
@@ -488,34 +585,6 @@ main {
     display: none;
 }
 
-/* Footer */
-.app-footer {
-    background: linear-gradient(135deg, #2d4f4c 0%, #3a615c 100%);
-    color: #ffffff;
-    padding: 0.75rem 2rem;
-    text-align: center;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 999;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.footer-link {
-    color: #ffffff;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
-    padding: 0.25rem 0.75rem;
-    border-radius: 6px;
-    transition: all 0.2s;
-    display: inline-block;
-}
-
-.footer-link:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-}
 
 /* Leaflet overrides */
 .map .leaflet-container {

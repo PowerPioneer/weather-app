@@ -2148,3 +2148,35 @@ async function createHeatmapOverlay() {
         }
     }
 }
+
+// Hamburger menu functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const hamburgerMenu = document.getElementById('hamburgerMenu');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    
+    if (hamburgerMenu && dropdownMenu) {
+        hamburgerMenu.addEventListener('click', function(e) {
+            e.stopPropagation();
+            hamburgerMenu.classList.toggle('active');
+            dropdownMenu.classList.toggle('active');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!hamburgerMenu.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                hamburgerMenu.classList.remove('active');
+                dropdownMenu.classList.remove('active');
+            }
+        });
+        
+        // Close dropdown when clicking a link
+        const dropdownLinks = dropdownMenu.querySelectorAll('.dropdown-link');
+        dropdownLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                hamburgerMenu.classList.remove('active');
+                dropdownMenu.classList.remove('active');
+            });
+        });
+    }
+});
+
