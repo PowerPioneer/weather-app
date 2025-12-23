@@ -1277,23 +1277,17 @@ async function createCountryOverlay() {
     state.isLoading = true;
     
     try {
-        // Check if we have cached data for this month
-        const cacheKey = `country_month_${month}`;
+        // Check if we have preloaded data (only on initial load with default viewport)
         let geojsonData;
         
-        // Check for preloaded data first (only on initial load)
+        // Use preloaded data only if it exists and matches the current month
         if (window.PRELOADED_COUNTRY_DATA && 
             window.PRELOADED_COUNTRY_DATA.month === month && 
-            window.PRELOADED_COUNTRY_DATA.data &&
-            !state[cacheKey]) {
+            window.PRELOADED_COUNTRY_DATA.data) {
             console.log('Using preloaded country data from HTML');
             geojsonData = window.PRELOADED_COUNTRY_DATA.data;
-            // Cache it and clear the preloaded data
-            state[cacheKey] = geojsonData;
-            window.PRELOADED_COUNTRY_DATA = null;  // Free memory
-        } else if (state[cacheKey]) {
-            console.log('Using cached country data');
-            geojsonData = state[cacheKey];
+            // Clear preloaded data after use to free memory
+            window.PRELOADED_COUNTRY_DATA = null;
         } else {
             // Get current viewport bounds for filtering
             const bounds = state.map.getBounds();
@@ -1325,10 +1319,6 @@ async function createCountryOverlay() {
             if (result.filtered) {
                 console.log(`Viewport filtering: ${result.feature_count} countries in view`);
             }
-            
-            // Cache the data (note: caching filtered data means it won't work for different viewports)
-            // TODO: Consider viewport-aware caching strategy
-            state[cacheKey] = geojsonData;
         }
         
         // Map variable names to data field names
@@ -1564,48 +1554,36 @@ async function createProvinceOverlay() {
     state.isLoading = true;
     
     try {
-        // Check if we have cached data for this month
-        const cacheKey = `province_month_${month}`;
-        let geojsonData;
+        // Get current viewport bounds for filtering
+        const bounds = state.map.getBounds();
+        const mapBounds = {
+            north: bounds.getNorth(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            west: bounds.getWest()
+        };
         
-        if (state[cacheKey]) {
-            console.log('Using cached province data');
-            geojsonData = state[cacheKey];
-        } else {
-            // Get current viewport bounds for filtering
-            const bounds = state.map.getBounds();
-            const mapBounds = {
-                north: bounds.getNorth(),
-                south: bounds.getSouth(),
-                east: bounds.getEast(),
-                west: bounds.getWest()
-            };
-            
-            // Fetch province data from API with viewport bounds
-            const url = `/api/provinces?month=${month}&variable=${variable}&` +
-                       `north=${mapBounds.north}&south=${mapBounds.south}&` +
-                       `east=${mapBounds.east}&west=${mapBounds.west}`;
-            console.log(`Fetching province data: ${url}`);
-            
-            const response = await fetch(url);
-            const result = await response.json();
-            
-            if (result.error) {
-                console.error('Error fetching province data:', result.error);
-                state.isLoading = false;
-                return;
-            }
-            
-            geojsonData = result.data;
-            
-            // Log filtering stats if available
-            if (result.filtered) {
-                console.log(`Viewport filtering: ${result.feature_count} provinces in view`);
-            }
-            
-            // Cache the data (note: caching filtered data means it won't work for different viewports)
-            // TODO: Consider viewport-aware caching strategy
-            state[cacheKey] = geojsonData;
+        // Always fetch fresh data with viewport filtering
+        // (caching disabled because data is viewport-specific)
+        const url = `/api/provinces?month=${month}&variable=${variable}&` +
+                   `north=${mapBounds.north}&south=${mapBounds.south}&` +
+                   `east=${mapBounds.east}&west=${mapBounds.west}`;
+        console.log(`Fetching province data: ${url}`);
+        
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (result.error) {
+            console.error('Error fetching province data:', result.error);
+            state.isLoading = false;
+            return;
+        }
+        
+        const geojsonData = result.data;
+        
+        // Log filtering stats if available
+        if (result.filtered) {
+            console.log(`Viewport filtering: ${result.feature_count} provinces in view`);
         }
         
         // Map variable names to data field names

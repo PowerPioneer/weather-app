@@ -423,3 +423,8 @@ def get_available_country_months_route():
     except Exception as e:
         print(f"ERROR in /countries/available: {e}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+@api_bp.route('/cache/stats', methods=['GET'])
+def get_cache_stats():
+    """Get cache statistics for performance monitoring."""
+    from app.data_loader import get_value_at_coordinate
