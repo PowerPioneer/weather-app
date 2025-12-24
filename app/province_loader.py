@@ -49,6 +49,7 @@ def get_province_data(month):
 def filter_by_bounds(geojson_data, north, south, east, west):
     """
     Filter GeoJSON features by bounding box.
+    Handles longitude wrapping across the international date line.
     
     Args:
         geojson_data: GeoJSON dict with features
@@ -62,26 +63,47 @@ def filter_by_bounds(geojson_data, north, south, east, west):
     
     filtered_features = []
     
+    # Check if viewport crosses the international date line (antimeridian)
+    crosses_antimeridian = west > east
+    
     for feature in geojson_data['features']:
         if 'geometry' not in feature or not feature['geometry']:
             continue
             
         geometry = feature['geometry']
+        found_in_bounds = False
         
         # Check if geometry intersects with bounds
         # For simplicity, check if any coordinate is within bounds
         if geometry['type'] == 'Polygon':
-            coords = geometry['coordinates'][0]  # Outer ring
+            coords_list = [geometry['coordinates'][0]]  # List with one outer ring
         elif geometry['type'] == 'MultiPolygon':
-            coords = geometry['coordinates'][0][0]  # First polygon, outer ring
+            # Check ALL polygons, not just the first one
+            coords_list = [poly[0] for poly in geometry['coordinates']]  # All outer rings
         else:
             continue
         
-        # Check if any point in the geometry is within bounds
-        for coord in coords:
-            lon, lat = coord[0], coord[1]
-            if south <= lat <= north and west <= lon <= east:
-                filtered_features.append(feature)
+        # Check if any point in any polygon is within bounds
+        for coords in coords_list:
+            for coord in coords:
+                lon, lat = coord[0], coord[1]
+                
+                # Check latitude
+                lat_in_bounds = south <= lat <= north
+                
+                # Check longitude with antimeridian handling
+                if crosses_antimeridian:
+                    # Viewport crosses dateline: accept if lon >= west OR lon <= east
+                    lon_in_bounds = lon >= west or lon <= east
+                else:
+                    # Normal case: west < east
+                    lon_in_bounds = west <= lon <= east
+                
+                if lat_in_bounds and lon_in_bounds:
+                    filtered_features.append(feature)
+                    found_in_bounds = True
+                    break
+            if found_in_bounds:
                 break
     
     return {

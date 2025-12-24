@@ -12,6 +12,7 @@ console.log('Current month:', currentMonth);
 const state = {
     map: null,
     heatmapLayer: null,
+    labelLayer: null,  // Layer for displaying values on map
     selectedLayer: null,  // Track selected province
     layers: {
         temperature: null,
@@ -683,6 +684,36 @@ function fahrenheitToCelsius(fahrenheit) {
 }
 
 /**
+ * Calculate centroid of a GeoJSON feature
+ */
+function getFeatureCentroid(feature) {
+    const geometry = feature.geometry;
+    if (!geometry) return null;
+    
+    let allCoords = [];
+    
+    if (geometry.type === 'Polygon') {
+        allCoords = geometry.coordinates[0];  // Outer ring
+    } else if (geometry.type === 'MultiPolygon') {
+        // Get coordinates from all polygons
+        geometry.coordinates.forEach(polygon => {
+            allCoords = allCoords.concat(polygon[0]);
+        });
+    } else {
+        return null;
+    }
+    
+    // Calculate average lat/lng
+    let sumLat = 0, sumLng = 0;
+    allCoords.forEach(coord => {
+        sumLng += coord[0];
+        sumLat += coord[1];
+    });
+    
+    return [sumLat / allCoords.length, sumLng / allCoords.length];
+}
+
+/**
  * Update month display
  */
 function updateMonthDisplay() {
@@ -714,6 +745,20 @@ function updateRangeSlider(type, minSlider, maxSlider) {
         state.preferences.tempMax = maxVal;
         const unit = state.temperatureUnit === 'C' ? '°C' : '°F';
         document.getElementById('tempRange').textContent = `${Math.round(minVal)}${unit} - ${Math.round(maxVal)}${unit}`;
+        
+        // Update label positions
+        const minRange = parseFloat(minSlider.max) - parseFloat(minSlider.min);
+        const minPercent = ((minVal - parseFloat(minSlider.min)) / minRange) * 100;
+        const maxPercent = ((maxVal - parseFloat(maxSlider.min)) / minRange) * 100;
+        
+        const minLabel = document.querySelector('.temp-min-label');
+        const maxLabel = document.querySelector('.temp-max-label');
+        
+        if (minLabel && maxLabel) {
+            // Position labels at the percentage position
+            minLabel.style.left = `calc(${minPercent}% - 12px)`;
+            maxLabel.style.left = `calc(${maxPercent}% - 12px)`;
+        }
     } else if (type === 'rain') {
         state.preferences.rainMin = minVal;
         state.preferences.rainMax = maxVal;
@@ -846,20 +891,41 @@ function updateLegend() {
                 unit = '°F';
             }
             
-            legendContent.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <span style="font-weight: 600; white-space: nowrap;">${config.label}</span>
-                    <span style="font-size: 0.75rem; color: #666;">${minVal}</span>
-                    <div style="
-                        width: 200px;
-                        height: 12px;
-                        background: linear-gradient(to right, ${gradientStops});
-                        border-radius: 3px;
-                        border: 1px solid #ccc;
-                    "></div>
-                    <span style="font-size: 0.75rem; color: #666;">${maxVal} ${unit}</span>
-                </div>
-            `;
+            if (isMobile) {
+                // Mobile: vertical layout with label on top
+                legendContent.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 0.3rem; align-items: center;">
+                        <span style="font-weight: 600; font-size: 0.75rem; white-space: nowrap;">${config.label}</span>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <span style="font-size: 0.65rem; color: #666;">${minVal}</span>
+                            <div style="
+                                width: 120px;
+                                height: 12px;
+                                background: linear-gradient(to right, ${gradientStops});
+                                border-radius: 3px;
+                                border: 1px solid #ccc;
+                            "></div>
+                            <span style="font-size: 0.65rem; color: #666;">${maxVal}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Desktop: horizontal layout
+                legendContent.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="font-weight: 600; white-space: nowrap;">${config.label}</span>
+                        <span style="font-size: 0.75rem; color: #666;">${minVal}</span>
+                        <div style="
+                            width: 200px;
+                            height: 12px;
+                            background: linear-gradient(to right, ${gradientStops});
+                            border-radius: 3px;
+                            border: 1px solid #ccc;
+                        "></div>
+                        <span style="font-size: 0.75rem; color: #666;">${maxVal} ${unit}</span>
+                    </div>
+                `;
+            }
         }
     }
 }
@@ -1450,8 +1516,9 @@ function calculateOverallScore(tempAvg, prec, sunhours) {
 async function fetchCombinedData(month, layerType, bounds = null) {
     const cacheKey = `${month}-${layerType}`;
     
-    // Check cache first (combined data contains all variables)
-    if (state.combinedDataCache[cacheKey]) {
+    // Only use cache for global (unbounded) data
+    // Province data with bounds should not be cached as viewport changes
+    if (!bounds && state.combinedDataCache[cacheKey]) {
         console.log(`Using cached combined data for ${layerType} month ${month}`);
         return state.combinedDataCache[cacheKey];
     }
@@ -1476,8 +1543,10 @@ async function fetchCombinedData(month, layerType, bounds = null) {
         
         console.log(`✓ Combined data loaded: ${result.variables.length} variables, ${result.data.features.length} features`);
         
-        // Cache the data (without bounds key since bounds are applied server-side)
-        state.combinedDataCache[cacheKey] = result.data;
+        // Only cache global (unbounded) data
+        if (!bounds) {
+            state.combinedDataCache[cacheKey] = result.data;
+        }
         
         return result.data;
     } catch (error) {
@@ -1516,24 +1585,15 @@ async function createCountryOverlay() {
             // Clear preloaded data after use to free memory
             window.PRELOADED_COUNTRY_DATA = null;
         } else {
-            // Get current viewport bounds for filtering
-            const bounds = state.map.getBounds();
-            const mapBounds = {
-                north: bounds.getNorth(),
-                south: bounds.getSouth(),
-                east: bounds.getEast(),
-                west: bounds.getWest()
-            };
-            
-            // Try to fetch from combined endpoint first (more efficient - one request for all variables)
-            geojsonData = await fetchCombinedData(month, 'countries', mapBounds);
+            // For countries, load all data without bounds filtering
+            // Country data is small enough (~1.5MB) that filtering isn't necessary
+            // and this avoids issues with international date line wrapping
+            geojsonData = await fetchCombinedData(month, 'countries', null);
             
             // If combined endpoint fails or is not available, fall back to single variable endpoint
             if (!geojsonData) {
                 console.log('Combined endpoint failed, falling back to single variable endpoint');
-                const baseUrl = `/api/countries?month=${month}&variable=${variable}&` +
-                           `north=${mapBounds.north}&south=${mapBounds.south}&` +
-                           `east=${mapBounds.east}&west=${mapBounds.west}`;
+                const baseUrl = `/api/countries?month=${month}&variable=${variable}`;
                 const url = addCacheBuster(baseUrl);
                 console.log(`Fetching country data: ${url}`);
                 
@@ -1547,11 +1607,6 @@ async function createCountryOverlay() {
                 }
                 
                 geojsonData = result.data;
-                
-                // Log filtering stats if available
-                if (result.filtered) {
-                    console.log(`Viewport filtering: ${result.feature_count} countries in view`);
-                }
             }
         }
         
@@ -1595,6 +1650,11 @@ async function createCountryOverlay() {
                     const [r, g, b, a] = result.color;
                     fillColor = `rgb(${r}, ${g}, ${b})`;
                     fillOpacity = a;
+                    
+                    // Debug logging for specific countries
+                    if (props.name === 'South Korea' || props.name === 'Japan') {
+                        console.log(`${props.name}: fillColor=${fillColor}, fillOpacity=${fillOpacity}, result=`, result);
+                    }
                 } else {
                     fillColor = '#ccc';
                     fillOpacity = 0.1;
@@ -1616,10 +1676,14 @@ async function createCountryOverlay() {
             };
         };
         
-        // Remove old layer
+        // Remove old layers
         if (state.heatmapLayer) {
             state.map.removeLayer(state.heatmapLayer);
             state.heatmapLayer = null;
+        }
+        if (state.labelLayer) {
+            state.map.removeLayer(state.labelLayer);
+            state.labelLayer = null;
         }
         
         // Create new GeoJSON layer
@@ -1628,6 +1692,18 @@ async function createCountryOverlay() {
             onEachFeature: (feature, layer) => {
                 const props = feature.properties;
                 const value = props[dataField];
+                
+                // Debug logging for specific countries
+                if (props.name === 'South Korea' || props.name === 'Japan') {
+                    console.log(`Adding ${props.name} to map:`, {
+                        geometry_type: feature.geometry?.type,
+                        polygon_count: feature.geometry?.coordinates?.length,
+                        value: value,
+                        temp_avg: props.temp_avg,
+                        prec_mean: props.prec_mean,
+                        sunhours_mean: props.sunhours_mean
+                    });
+                }
                 
                 // Format value for display
                 let valueStr = 'No data';
@@ -1770,6 +1846,61 @@ async function createCountryOverlay() {
             }
         }).addTo(state.map);
         
+        // Add labels for non-overall modes
+        if (state.labelLayer) {
+            state.map.removeLayer(state.labelLayer);
+            state.labelLayer = null;
+        }
+        
+        if (state.displayMode !== 'overall') {
+            state.labelLayer = L.layerGroup();
+            geojsonData.features.forEach(feature => {
+                const props = feature.properties;
+                const value = props[dataField];
+                
+                if (value !== null && value !== undefined) {
+                    let labelText;
+                    if (variable === 'temperature') {
+                        const displayValue = state.temperatureUnit === 'F' 
+                            ? celsiusToFahrenheit(value)
+                            : value;
+                        const unit = state.temperatureUnit === 'F' ? '°F' : '°C';
+                        labelText = displayValue.toFixed(0) + unit;
+                    } else if (variable === 'rainfall') {
+                        labelText = value.toFixed(1);
+                    } else if (variable === 'sunshine') {
+                        labelText = value.toFixed(1);
+                    }
+                    
+                    // Calculate centroid
+                    const centroid = getFeatureCentroid(feature);
+                    if (centroid) {
+                        const label = L.marker(centroid, {
+                            icon: L.divIcon({
+                                className: 'value-label',
+                                html: `<div style="
+                                    font-size: 10px;
+                                    font-weight: 700;
+                                    color: #333;
+                                    white-space: nowrap;
+                                    text-shadow: 
+                                        -1px -1px 0 rgba(255,255,255,0.8),
+                                        1px -1px 0 rgba(255,255,255,0.8),
+                                        -1px 1px 0 rgba(255,255,255,0.8),
+                                        1px 1px 0 rgba(255,255,255,0.8);
+                                    pointer-events: none;
+                                ">${labelText}</div>`,
+                                iconSize: null
+                            }),
+                            interactive: false
+                        });
+                        state.labelLayer.addLayer(label);
+                    }
+                }
+            });
+            state.labelLayer.addTo(state.map);
+        }
+        
         console.log('✓ Country overlay created');
         
     } catch (error) {
@@ -1805,6 +1936,8 @@ async function createProvinceOverlay() {
             east: bounds.getEast(),
             west: bounds.getWest()
         };
+        
+        console.log(`Province viewport bounds: N=${mapBounds.north.toFixed(2)}, S=${mapBounds.south.toFixed(2)}, E=${mapBounds.east.toFixed(2)}, W=${mapBounds.west.toFixed(2)}`);
         
         // Try to fetch from combined endpoint first (more efficient - one request for all variables)
         let geojsonData = await fetchCombinedData(month, 'provinces', mapBounds);
@@ -1896,11 +2029,15 @@ async function createProvinceOverlay() {
             };
         };
         
-        // Remove old layer
+        // Remove old layers
         if (state.heatmapLayer) {
             state.map.removeLayer(state.heatmapLayer);
             state.heatmapLayer = null;
             state.selectedLayer = null;  // Clear selected layer when removing overlay
+        }
+        if (state.labelLayer) {
+            state.map.removeLayer(state.labelLayer);
+            state.labelLayer = null;
         }
         
         // Add new GeoJSON layer
@@ -2063,6 +2200,61 @@ async function createProvinceOverlay() {
         });
         
         state.heatmapLayer.addTo(state.map);
+        
+        // Add labels for non-overall modes
+        if (state.labelLayer) {
+            state.map.removeLayer(state.labelLayer);
+            state.labelLayer = null;
+        }
+        
+        if (state.displayMode !== 'overall') {
+            state.labelLayer = L.layerGroup();
+            geojsonData.features.forEach(feature => {
+                const props = feature.properties;
+                const value = props[dataField];
+                
+                if (value !== null && value !== undefined) {
+                    let labelText;
+                    if (variable === 'temperature') {
+                        const displayValue = state.temperatureUnit === 'F' 
+                            ? celsiusToFahrenheit(value)
+                            : value;
+                        const unit = state.temperatureUnit === 'F' ? '°F' : '°C';
+                        labelText = displayValue.toFixed(0) + unit;
+                    } else if (variable === 'rainfall') {
+                        labelText = value.toFixed(1);
+                    } else if (variable === 'sunshine') {
+                        labelText = value.toFixed(1);
+                    }
+                    
+                    // Calculate centroid
+                    const centroid = getFeatureCentroid(feature);
+                    if (centroid) {
+                        const label = L.marker(centroid, {
+                            icon: L.divIcon({
+                                className: 'value-label',
+                                html: `<div style="
+                                    font-size: 10px;
+                                    font-weight: 700;
+                                    color: #333;
+                                    white-space: nowrap;
+                                    text-shadow: 
+                                        -1px -1px 0 rgba(255,255,255,0.8),
+                                        1px -1px 0 rgba(255,255,255,0.8),
+                                        -1px 1px 0 rgba(255,255,255,0.8),
+                                        1px 1px 0 rgba(255,255,255,0.8);
+                                    pointer-events: none;
+                                ">${labelText}</div>`,
+                                iconSize: null
+                            }),
+                            interactive: false
+                        });
+                        state.labelLayer.addLayer(label);
+                    }
+                }
+            });
+            state.labelLayer.addTo(state.map);
+        }
         
         console.log('Province overlay created successfully');
         

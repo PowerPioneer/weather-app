@@ -131,10 +131,12 @@
                         <!-- Temperature Range -->
                         <div class="preference-section">
                             <h3>Temperature: <span id="tempRange">18°C - 28°C</span></h3>
-                            <div class="dual-slider">
-                                <input type="range" id="tempMin" min="-20" max="50" value="18" step="1">
-                                <input type="range" id="tempMax" min="-20" max="50" value="28" step="1">
+                            <div class="dual-slider temp-slider">
+                                <input type="range" id="tempMin" class="temp-min-slider" min="-20" max="50" value="18" step="1">
+                                <input type="range" id="tempMax" class="temp-max-slider" min="-20" max="50" value="28" step="1">
                                 <div class="slider-track"></div>
+                                <span class="temp-label temp-min-label">min</span>
+                                <span class="temp-label temp-max-label">max</span>
                             </div>
                         </div>
 

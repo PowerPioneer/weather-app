@@ -242,7 +242,7 @@ main {
 
 .climate-preferences-sidebar:not(.collapsed) {
     width: 280px;
-    max-height: calc(100vh - 180px);
+    max-height: calc(100vh - 115px);
     overflow-y: auto;
 }
 
@@ -303,8 +303,8 @@ main {
 }
 
 .preference-section {
-    margin-bottom: 0.5rem;
-    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.25rem;
     border-bottom: 1px solid #d4e3e1;
 }
 
@@ -397,7 +397,7 @@ main {
 
 /* Display Mode Buttons */
 .display-mode-section {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
 .mode-buttons {
@@ -451,8 +451,8 @@ main {
 /* Dual Range Slider Styling */
 .dual-slider {
     position: relative;
-    height: 35px;
-    margin-top: 0.4rem;
+    height: 28px;
+    margin-top: 0.3rem;
 }
 
 .dual-slider input[type="range"] {
@@ -492,6 +492,31 @@ main {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     border: 2px solid white;
     margin-top: -6px;
+}
+
+/* Labels for temperature sliders */
+.temp-slider {
+    position: relative;
+}
+
+.temp-label {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 600;
+    color: #2c3e3b;
+    pointer-events: none;
+    z-index: 100;
+    top: 15px;
+    width: 24px;
+    text-align: center;
+}
+
+.temp-min-label {
+    left: 0;
+}
+
+.temp-max-label {
+    left: 0;
 }
 
 .dual-slider input[type="range"]::-webkit-slider-runnable-track {
@@ -624,7 +649,7 @@ main {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
 }
 
 .clear-cache-btn:hover {
