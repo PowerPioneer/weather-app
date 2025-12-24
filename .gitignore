@@ -74,6 +74,14 @@ data/countries/*.dbf
 data/countries/*.prj
 data/countries/*.cpg
 
+# Compressed archives (duplicates of shapefiles)
+data/provinces/*.zip
+data/countries/*.zip
+
+# Raw CRU grid data
+data/*.dat.gz
+data/*.dat
+
 # Aggregated files (intermediate, commit optimized instead)
 data/provinces/aggregated/
 data/countries/aggregated/
