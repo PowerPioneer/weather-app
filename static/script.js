@@ -154,6 +154,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize event listeners
     initializeEventListeners();
     
+    // Initialize rainfall info button
+    initRainfallInfo();
+    
     // Load initial data
     loadRegions();
     
@@ -640,6 +643,34 @@ function updateRangeSlider(type, minSlider, maxSlider) {
         }
         state.updateTimeout = setTimeout(updateMapLayers, 300);
     }
+}
+
+/**
+ * Initialize rainfall info button and tooltip
+ */
+function initRainfallInfo() {
+    const infoBtn = document.getElementById('rainfallInfoBtn');
+    const tooltip = document.getElementById('rainfallInfoTooltip');
+    
+    if (!infoBtn || !tooltip) return;
+    
+    // Toggle tooltip on button click
+    infoBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        tooltip.classList.toggle('show');
+    });
+    
+    // Close tooltip when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!infoBtn.contains(e.target) && !tooltip.contains(e.target)) {
+            tooltip.classList.remove('show');
+        }
+    });
+    
+    // Prevent tooltip from closing when clicking inside it
+    tooltip.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
 }
 
 /**

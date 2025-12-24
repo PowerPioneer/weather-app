@@ -314,6 +314,87 @@ main {
     padding-bottom: 0;
 }
 
+.preference-section h3 {
+    position: relative;
+    display: inline-block;
+}
+
+/* Info Button */
+.info-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-left: 6px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    transition: color 0.2s ease;
+    vertical-align: middle;
+    position: relative;
+}
+
+.info-btn:hover {
+    color: #2d4f4c;
+}
+
+.info-btn svg {
+    display: block;
+}
+
+/* Info Tooltip */
+.info-tooltip {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: calc(100% + 8px);
+    background: white;
+    border: 1px solid #d4e3e1;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 250px;
+    max-width: 300px;
+}
+
+.info-tooltip.show {
+    display: block;
+}
+
+.info-tooltip-content {
+    padding: 12px 16px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.info-tooltip-content strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #2d4f4c;
+    font-size: 0.9rem;
+}
+
+.info-tooltip-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-tooltip-content li {
+    padding: 4px 0;
+    color: #2c3e3b;
+}
+
+.info-tooltip-content li strong {
+    display: inline;
+    margin-bottom: 0;
+    font-weight: 600;
+    color: #2d4f4c;
+}
+
 /* Display Mode Buttons */
 .display-mode-section {
     margin-bottom: 0.5rem;
