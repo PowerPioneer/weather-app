@@ -471,6 +471,109 @@ def get_available_country_months_route():
         print(f"ERROR in /countries/available: {e}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
+@api_bp.route('/combined', methods=['GET'])
+def get_combined_data():
+    """
+    Get combined climate data for all 4 variables in one request.
+    Reduces API calls from 4 to 1 for improved performance.
+    
+    This endpoint returns data for temperature, rainfall, sunshine, and overall score
+    in a single response, with pre-computed overall scores on the server side.
+    """
+    month = request.args.get('month')
+    layer_type = request.args.get('layer', 'countries')  # 'countries' or 'provinces'
+    
+    # Optional viewport bounds for filtering
+    north = request.args.get('north')
+    south = request.args.get('south')
+    east = request.args.get('east')
+    west = request.args.get('west')
+    
+    # Validate parameters
+    if not month:
+        return jsonify({
+            'error': 'Missing parameter: month required'
+        }), 400
+    
+    try:
+        month = int(month)
+        
+        if not (1 <= month <= 12):
+            return jsonify({'error': 'Month must be between 1 and 12'}), 400
+        
+        if layer_type not in ['countries', 'provinces']:
+            return jsonify({'error': 'Layer must be countries or provinces'}), 400
+        
+        # Parse bounds if provided
+        bounds = None
+        if all([north, south, east, west]):
+            bounds = {
+                'north': float(north),
+                'south': float(south),
+                'east': float(east),
+                'west': float(west)
+            }
+        
+        # Load data based on layer type
+        if layer_type == 'countries':
+            # Get base country data (contains all variables)
+            from app.country_loader import get_country_data
+            data = get_country_data(month)
+            
+            if bounds:
+                from app.country_loader import filter_by_bounds
+                data = filter_by_bounds(
+                    data,
+                    bounds.get('north'),
+                    bounds.get('south'),
+                    bounds.get('east'),
+                    bounds.get('west')
+                )
+        else:  # provinces
+            # Get base province data (contains all variables)
+            from app.province_loader import get_province_data
+            data = get_province_data(month)
+            
+            if bounds:
+                from app.province_loader import filter_by_bounds
+                data = filter_by_bounds(
+                    data,
+                    bounds.get('north'),
+                    bounds.get('south'),
+                    bounds.get('east'),
+                    bounds.get('west')
+                )
+        
+        if not data:
+            return jsonify({'error': f'{layer_type.capitalize()} data not available for this month'}), 404
+        
+        # Data already contains all variables (temp_avg, prec_mean, sunhours_mean, overall_score)
+        # No need to filter - frontend can extract what it needs
+        
+        response_data = {
+            'month': month,
+            'layer_type': layer_type,
+            'data': data,
+            'variables': ['temperature', 'rainfall', 'sunshine', 'overall']
+        }
+        
+        # Add debug info
+        if bounds:
+            response_data['filtered'] = True
+            response_data['feature_count'] = len(data.get('features', []))
+        
+        # Cache for 24 hours - combined data is static
+        etag_base = f"combined-{layer_type}-{month}"
+        return cached_jsonify(response_data, max_age=86400, etag_base=etag_base)
+        
+    except (ValueError, TypeError) as e:
+        return jsonify({'error': f'Invalid parameter format: {str(e)}'}), 400
+    except Exception as e:
+        print(f"ERROR in /combined: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
 @api_bp.route('/cache/stats', methods=['GET'])
 def get_cache_stats():
     """Get cache statistics for performance monitoring."""

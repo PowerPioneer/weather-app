@@ -54,7 +54,7 @@ CONFIG = load_config()
 
 # Feature flags for performance optimizations
 USE_TOPOJSON = False  # Set to True to use TopoJSON format instead of GeoJSON (58% smaller files)
-USE_COMBINED_GRID = False  # Set to True to use combined grid endpoint for overall mode (reduces 4 API calls to 1)
+USE_COMBINED_ENDPOINT = True  # Set to True to use combined endpoint for all variables (reduces 4 API calls to 1)
 
 def get_cds_credentials():
     """Get CDS API credentials"""

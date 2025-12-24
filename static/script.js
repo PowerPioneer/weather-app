@@ -29,6 +29,7 @@ const state = {
     abortController: null,
     lastFetchBounds: null,  // Track last fetched bounds
     cacheBuster: null,  // Timestamp for cache-busting when clearing cache
+    combinedDataCache: {},  // Cache for combined endpoint data {month-layerType: data}
     preferences: {
         tempMin: 18,
         tempMax: 30,
@@ -616,6 +617,10 @@ function initializeEventListeners() {
                 
                 // Add cache-busting timestamp to force fresh data
                 state.cacheBuster = Date.now();
+                
+                // Clear combined data cache
+                state.combinedDataCache = {};
+                console.log('Combined data cache cleared');
                 
                 // Force reload all current data
                 console.log('Forcing reload of all layers...');
@@ -1434,6 +1439,54 @@ function calculateOverallScore(tempAvg, prec, sunhours) {
 }
 
 /**
+ * Fetch combined data for all 4 variables (temperature, rainfall, sunshine, overall) in one request.
+ * Uses the combined endpoint to reduce API calls from 4 to 1.
+ * 
+ * @param {number} month - Month number (1-12)
+ * @param {string} layerType - 'countries' or 'provinces'
+ * @param {object} bounds - Optional viewport bounds {north, south, east, west}
+ * @returns {object|null} Combined GeoJSON data with all variables, or null if error
+ */
+async function fetchCombinedData(month, layerType, bounds = null) {
+    const cacheKey = `${month}-${layerType}`;
+    
+    // Check cache first (combined data contains all variables)
+    if (state.combinedDataCache[cacheKey]) {
+        console.log(`Using cached combined data for ${layerType} month ${month}`);
+        return state.combinedDataCache[cacheKey];
+    }
+    
+    try {
+        // Build URL with optional bounds
+        let url = `/api/combined?month=${month}&layer=${layerType}`;
+        if (bounds) {
+            url += `&north=${bounds.north}&south=${bounds.south}&east=${bounds.east}&west=${bounds.west}`;
+        }
+        
+        const finalUrl = addCacheBuster(url);
+        console.log(`Fetching combined data: ${finalUrl}`);
+        
+        const response = await fetch(finalUrl);
+        const result = await response.json();
+        
+        if (result.error) {
+            console.error('Error fetching combined data:', result.error);
+            return null;
+        }
+        
+        console.log(`✓ Combined data loaded: ${result.variables.length} variables, ${result.data.features.length} features`);
+        
+        // Cache the data (without bounds key since bounds are applied server-side)
+        state.combinedDataCache[cacheKey] = result.data;
+        
+        return result.data;
+    } catch (error) {
+        console.error('Error fetching combined data:', error);
+        return null;
+    }
+}
+
+/**
  * Create country-based map visualization
  * Uses pre-aggregated country data for zoomed-out views
  */
@@ -1472,27 +1525,33 @@ async function createCountryOverlay() {
                 west: bounds.getWest()
             };
             
-            // Fetch country data from API with viewport bounds
-            const baseUrl = `/api/countries?month=${month}&variable=${variable}&` +
-                       `north=${mapBounds.north}&south=${mapBounds.south}&` +
-                       `east=${mapBounds.east}&west=${mapBounds.west}`;
-            const url = addCacheBuster(baseUrl);
-            console.log(`Fetching country data: ${url}`);
+            // Try to fetch from combined endpoint first (more efficient - one request for all variables)
+            geojsonData = await fetchCombinedData(month, 'countries', mapBounds);
             
-            const response = await fetch(url);
-            const result = await response.json();
-            
-            if (result.error) {
-                console.error('Error fetching country data:', result.error);
-                state.isLoading = false;
-                return;
-            }
-            
-            geojsonData = result.data;
-            
-            // Log filtering stats if available
-            if (result.filtered) {
-                console.log(`Viewport filtering: ${result.feature_count} countries in view`);
+            // If combined endpoint fails or is not available, fall back to single variable endpoint
+            if (!geojsonData) {
+                console.log('Combined endpoint failed, falling back to single variable endpoint');
+                const baseUrl = `/api/countries?month=${month}&variable=${variable}&` +
+                           `north=${mapBounds.north}&south=${mapBounds.south}&` +
+                           `east=${mapBounds.east}&west=${mapBounds.west}`;
+                const url = addCacheBuster(baseUrl);
+                console.log(`Fetching country data: ${url}`);
+                
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (result.error) {
+                    console.error('Error fetching country data:', result.error);
+                    state.isLoading = false;
+                    return;
+                }
+                
+                geojsonData = result.data;
+                
+                // Log filtering stats if available
+                if (result.filtered) {
+                    console.log(`Viewport filtering: ${result.feature_count} countries in view`);
+                }
             }
         }
         
@@ -1738,28 +1797,33 @@ async function createProvinceOverlay() {
             west: bounds.getWest()
         };
         
-        // Always fetch fresh data with viewport filtering
-        // (caching disabled because data is viewport-specific)
-        const baseUrl = `/api/provinces?month=${month}&variable=${variable}&` +
-                   `north=${mapBounds.north}&south=${mapBounds.south}&` +
-                   `east=${mapBounds.east}&west=${mapBounds.west}`;
-        const url = addCacheBuster(baseUrl);
-        console.log(`Fetching province data: ${url}`);
+        // Try to fetch from combined endpoint first (more efficient - one request for all variables)
+        let geojsonData = await fetchCombinedData(month, 'provinces', mapBounds);
         
-        const response = await fetch(url);
-        const result = await response.json();
-        
-        if (result.error) {
-            console.error('Error fetching province data:', result.error);
-            state.isLoading = false;
-            return;
-        }
-        
-        const geojsonData = result.data;
-        
-        // Log filtering stats if available
-        if (result.filtered) {
-            console.log(`Viewport filtering: ${result.feature_count} provinces in view`);
+        // If combined endpoint fails or is not available, fall back to single variable endpoint
+        if (!geojsonData) {
+            console.log('Combined endpoint failed, falling back to single variable endpoint');
+            const baseUrl = `/api/provinces?month=${month}&variable=${variable}&` +
+                       `north=${mapBounds.north}&south=${mapBounds.south}&` +
+                       `east=${mapBounds.east}&west=${mapBounds.west}`;
+            const url = addCacheBuster(baseUrl);
+            console.log(`Fetching province data: ${url}`);
+            
+            const response = await fetch(url);
+            const result = await response.json();
+            
+            if (result.error) {
+                console.error('Error fetching province data:', result.error);
+                state.isLoading = false;
+                return;
+            }
+            
+            geojsonData = result.data;
+            
+            // Log filtering stats if available
+            if (result.filtered) {
+                console.log(`Viewport filtering: ${result.feature_count} provinces in view`);
+            }
         }
         
         // Map variable names to data field names
