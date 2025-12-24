@@ -59,6 +59,8 @@ def main():
                        help="Skip aggregation steps (jump to optimization)")
     parser.add_argument("--optimization-only", action="store_true",
                        help="Only run optimization steps (requires existing aggregated data)")
+    parser.add_argument("--skip-topojson", action="store_true",
+                       help="Skip TopoJSON conversion (use regular GeoJSON)")
     
     args = parser.parse_args()
     
@@ -123,6 +125,16 @@ def main():
         steps_failed.append("Optimize Country GeoJSON")
         print("\n⚠️  Country optimization failed")
     
+    # Step 8: Convert to TopoJSON (optional)
+    if not args.skip_topojson:
+        if run_script("convert_to_topojson.py", "Convert to TopoJSON Format"):
+            steps_completed.append("Convert to TopoJSON")
+        else:
+            steps_failed.append("Convert to TopoJSON")
+            print("\n⚠️  TopoJSON conversion failed")
+    else:
+        print("\n⏭️   Skipping TopoJSON conversion (--skip-topojson flag)")
+    
     # Summary
     print("\n" + "="*70)
     print("PIPELINE SUMMARY")
@@ -150,6 +162,7 @@ def main():
         ("Province Optimized", data_dir / "provinces" / "optimized"),
         ("Country Aggregated", data_dir / "countries" / "aggregated"),
         ("Country Optimized", data_dir / "countries" / "optimized"),
+        ("Country TopoJSON", data_dir / "countries" / "topojson"),
     ]
     
     for name, path in dirs_to_check:
