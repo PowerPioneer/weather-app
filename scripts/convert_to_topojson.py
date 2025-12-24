@@ -42,6 +42,7 @@ def convert_geojson_to_topojson(input_file, output_file, object_name='data'):
     print(f"  Converting to TopoJSON...")
     
     try:
+        # Try with standard settings first (works for countries)
         topology = tp.Topology(
             geojson_data,
             prequantize=100000,  # Quantization level
@@ -51,17 +52,23 @@ def convert_geojson_to_topojson(input_file, output_file, object_name='data'):
     except (KeyboardInterrupt, SystemExit):
         raise
     except Exception as e:
-        # If topology building fails, try without topology optimization
-        print(f"  Warning: Topology optimization failed ({e}), using simple conversion...")
+        # If topology building fails, try with lower precision (works for complex provinces)
+        print(f"  Warning: High-precision conversion failed, trying with lower precision...")
         try:
+            topology = tp.Topology(
+                geojson_data,
+                prequantize=10000,  # Lower quantization for complex geometries
+                topology=True,
+                prevent_oversimplify=False  # Allow simplification
+            )
+        except Exception as e2:
+            # Last resort: try without topology optimization
+            print(f"  Warning: Topology optimization failed ({e2}), using simple conversion...")
             topology = tp.Topology(
                 geojson_data,
                 prequantize=100000,
                 topology=False  # Skip topology building
             )
-        except Exception as e2:
-            print(f"  Error: Conversion failed entirely: {e2}")
-            raise
     
     # Convert to dict format
     topo_dict = topology.to_dict()
@@ -160,11 +167,8 @@ def main():
     # Convert countries
     convert_all_countries()
     
-    # Convert provinces (currently disabled due to topojson library issues with complex geometries)
-    # TODO: Find alternative TopoJSON library or implement custom quantization for provinces
-    # convert_all_provinces()
-    print("\nNote: Province TopoJSON conversion skipped due to complexity.")
-    print("      Countries provide ~58% reduction, provinces remain as GeoJSON.\n")
+    # Convert provinces (now works with adaptive precision)
+    convert_all_provinces()
     
     print("=" * 60)
     print("✓ Conversion complete!")
