@@ -50,7 +50,39 @@ keys/cdsapirc
 *.log
 logs/
 
-# Data
+# Data - Keep raw/intermediate files locally, but don't commit to git
+# Raw NetCDF files (too large for git)
+data/era5/raw/*.nc
+
+# GeoTIFF files (intermediate, only needed for aggregation)
+data/era5/tmin/*.tif
+data/era5/tmax/*.tif
+data/era5/prec/*.tif
+data/cru/sunhours/*.tif
+
+# Base geometry files (intermediate, large)
+data/provinces/provinces.geojson
+data/countries/countries.geojson
+data/provinces/*.shp
+data/provinces/*.shx
+data/provinces/*.dbf
+data/provinces/*.prj
+data/provinces/*.cpg
+data/countries/*.shp
+data/countries/*.shx
+data/countries/*.dbf
+data/countries/*.prj
+data/countries/*.cpg
+
+# Aggregated files (intermediate, commit optimized instead)
+data/provinces/aggregated/
+data/countries/aggregated/
+
+# Keep optimized files (these ARE committed)
+!data/provinces/optimized/
+!data/countries/optimized/
+
+# Other data formats
 data/raw/
 data/processed/
 *.csv

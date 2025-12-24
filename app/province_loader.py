@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 import geopandas as gpd
 
-# Path to province data
-PROVINCES_DIR = Path(__file__).parent.parent / "data" / "provinces" / "aggregated"
+# Path to province data (optimized for web serving)
+PROVINCES_DIR = Path(__file__).parent.parent / "data" / "provinces" / "optimized"
 
 # Cache for loaded province data
 _province_cache = {}

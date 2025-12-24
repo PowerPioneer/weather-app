@@ -5,8 +5,8 @@ This provides pre-computed country averages for zoomed-out map views.
 import json
 from pathlib import Path
 
-# Path to country data
-COUNTRIES_DIR = Path(__file__).parent.parent / "data" / "countries" / "aggregated"
+# Path to country data (optimized for web serving)
+COUNTRIES_DIR = Path(__file__).parent.parent / "data" / "countries" / "optimized"
 
 # Cache for loaded country data
 _country_cache = {}
