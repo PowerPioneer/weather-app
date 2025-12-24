@@ -69,15 +69,42 @@
                 <!-- Transparent overlay for preferences panel backdrop -->
                 <div class="preferences-overlay" id="preferencesOverlay"></div>
                 
+                <!-- Mobile Toggle Button (outside sidebar) -->
+                <button class="preferences-toggle mobile-toggle" id="preferencesToggle">
+                    <span class="toggle-icon">▶</span>
+                    <span class="toggle-text">Climate Preferences</span>
+                </button>
+                
                 <!-- Climate Preferences Sidebar (left side, collapsible) -->
                 <div class="climate-preferences-sidebar collapsed">
                     <button class="close-btn preferences-close-btn" id="preferencesCloseBtn">&times;</button>
-                    <button class="preferences-toggle" id="preferencesToggle">
+                    
+                    <!-- Desktop toggle button (inside sidebar) -->
+                    <button class="preferences-toggle desktop-toggle">
                         <span class="toggle-icon">☰</span>
                         <span class="toggle-text">Climate Preferences</span>
                     </button>
                     
                     <div class="preferences-content" id="preferencesContent">
+                        <!-- Mobile Month Selector (hidden on desktop) -->
+                        <div class="mobile-month-selector" style="display: none;">
+                            <label for="mobileMonthSelect">Month:</label>
+                            <select id="mobileMonthSelect" class="month-select">
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6" selected>June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                        
                         <!-- Display Mode Selector -->
                         <div class="display-mode-section">
                             <h3>Display Mode</h3>

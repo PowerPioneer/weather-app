@@ -251,7 +251,8 @@ main {
     display: none !important; /* Hidden on desktop */
 }
 
-.preferences-toggle {
+/* Desktop toggle button (inside sidebar) */
+.preferences-toggle.desktop-toggle {
     background: linear-gradient(135deg, #4a7d78 0%, #5d8f87 100%);
     color: #ffffff;
     border: none;
@@ -268,6 +269,11 @@ main {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
+/* Hide mobile toggle button on desktop */
+.preferences-toggle.mobile-toggle {
+    display: none;
+}
+
 .preferences-toggle:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -281,10 +287,12 @@ main {
     display: none;
     padding: 0.75rem;
     padding-top: 0.5rem;
+    height: 100%;
 }
 
 .climate-preferences-sidebar:not(.collapsed) .preferences-content {
     display: block;
+    height: 100%;
 }
 
 .climate-preferences-sidebar h3 {
@@ -330,6 +338,7 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 0.15rem;
 }
 
@@ -456,6 +465,7 @@ main {
 .legend-colors {
     display: flex;
     gap: 0.5rem;
+    align-items: stretch;
 }
 
 .legend-color {
@@ -464,6 +474,10 @@ main {
     font-size: 0.8rem;
     color: white;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
 }
 
 /* Info Message Overlay (bottom center) */
@@ -583,8 +597,13 @@ main {
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+    z-index: 999;
     display: none;
+    pointer-events: none;
+}
+
+.preferences-overlay.active {
+    pointer-events: all;
 }
 
 
@@ -646,21 +665,33 @@ svg path {
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
-        align-items: center;
+        align-items: stretch;
+    }
+    
+    /* Title and hamburger on same row */
+    .header-center {
+        order: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        flex: 1;
+    }
+    
+    .header-right {
+        order: 1;
+        position: absolute;
+        top: 1rem;
+        right: 1.5rem;
     }
     
     .header-left {
         order: 2;
-        justify-self: center;
         display: flex;
         align-items: center;
         gap: 0.5rem;
-    }
-    
-    .header-center {
-        order: 1;
-        justify-self: center;
-        text-align: center;
+        justify-content: flex-start;
+        width: 100%;
     }
     
     header h1 {
@@ -671,10 +702,22 @@ svg path {
         font-size: 0.85rem;
     }
     
+    /* Hide month selector on mobile - moved to preferences panel */
+    .header-left {
+        display: none !important;
+    }
+    
     /* Map container - dynamic height based on header */
     .map-container-fullscreen {
         height: calc(100vh - var(--header-height, 80px));
         min-height: 400px;
+        margin-top: 0;
+        border-top: none;
+    }
+    
+    main {
+        padding-top: var(--header-height, 80px);
+        background: transparent;
     }
     
     /* Preferences overlay backdrop */
@@ -682,20 +725,30 @@ svg path {
         display: block;
     }
     
+    /* Lower legend z-index so it appears behind overlay */
+    .legend-overlay {
+        z-index: 998;
+    }
+    
     /* Preferences sidebar - fixed positioning for mobile */
     .climate-preferences-sidebar {
         position: fixed;
-        top: auto;
-        bottom: 60px;
-        left: 10px;
-        max-height: calc(100vh - 100px);
-        width: 280px;
-        z-index: 1001;
+        top: var(--header-height, 80px);
+        bottom: 0;
+        left: 0;
+        width: 300px;
+        height: auto;
+        z-index: 1002;
+        border-radius: 0;
+        transform: translateX(0);
+        transition: transform 0.3s ease;
+        overflow-y: auto;
     }
     
     .climate-preferences-sidebar.collapsed {
-        width: auto;
-        bottom: 60px;
+        transform: translateX(-100%);
+        width: 300px;
+        overflow: visible;
     }
     
     /* Show close button on mobile */
@@ -728,26 +781,79 @@ svg path {
         display: none !important;
     }
     
-    /* Make preferences toggle button compact (hamburger) when collapsed on mobile */
-    .climate-preferences-sidebar.collapsed .preferences-toggle {
-        width: auto;
-        padding: 0.75rem;
-        border-radius: 50%;
-        min-width: 48px;
-        min-height: 48px;
+    /* Hide desktop toggle button on mobile */
+    .preferences-toggle.desktop-toggle {
+        display: none !important;
+    }
+    
+    /* Mobile toggle button (now outside sidebar, always visible) */
+    .preferences-toggle.mobile-toggle {
+        position: fixed !important;
+        left: 0 !important;
+        top: 120px !important;
+        width: 32px !important;
+        height: 60px !important;
+        padding: 0 !important;
+        border-radius: 0 8px 8px 0 !important;
         justify-content: center;
-        background: linear-gradient(135deg, #4a7d78 0%, #5d8f87 100%) !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        border: none;
+        align-items: center;
+        background: white !important;
+        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3) !important;
+        border: 1px solid #ddd !important;
+        z-index: 9999 !important;
+        transition: opacity 0.3s ease, left 0.3s ease !important;
+        flex-direction: column;
+        gap: 0.25rem;
+        display: flex !important;
+        transform: none !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: all !important;
+        cursor: pointer;
     }
     
-    .climate-preferences-sidebar.collapsed .toggle-text {
-        display: none;
+    /* Hide toggle button when sidebar is open */
+    body:has(.climate-preferences-sidebar:not(.collapsed)) .preferences-toggle.mobile-toggle {
+        opacity: 0 !important;
+        pointer-events: none !important;
     }
     
-    .climate-preferences-sidebar.collapsed .toggle-icon {
-        font-size: 1.5rem;
+    /* Arrow icon styling - points right when collapsed, left when open */
+    .toggle-icon {
+        font-size: 1.2rem;
         margin: 0;
+        color: #2c3e3b;
+        transform: rotate(0deg);
+        transition: transform 0.3s ease;
+        display: inline-block !important;
+    }
+    
+    /* Rotate arrow when sidebar is open */
+    body:has(.climate-preferences-sidebar:not(.collapsed)) .toggle-icon {
+        transform: rotate(180deg);
+    }
+    
+    .toggle-text {
+        display: none !important;
+    }
+    
+    /* Hide emoticon icons on mobile display mode buttons */
+    .mode-btn .icon {
+        display: none !important;
+    }
+    
+    /* Reduce spacing under sliders on mobile */
+    .preference-section {
+        margin-bottom: 0.25rem;
+        padding-bottom: 0.25rem;
+    }
+    
+    /* Ensure preferences content fills sidebar completely */
+    .preferences-content {
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column;
+        padding-bottom: 2rem;
     }
     
     /* Hide overlay on mobile */
@@ -755,16 +861,59 @@ svg path {
         display: none !important;
     }
     
-    /* Show weather section on mobile */
+    /* Show weather section on mobile - expandable bottom sheet */
     .weather-details-section {
         display: block;
-        position: relative;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
         width: 100%;
         max-width: 100%;
-        padding: 2rem 1.5rem;
+        height: 70vh;
+        padding: 1.5rem;
+        padding-top: 3rem;
+        padding-bottom: 2rem;
         margin: 0;
+        border-radius: 12px 12px 0 0;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+        overflow-y: auto;
+        z-index: 10000;
+        background: white;
+        transform: translateY(calc(70vh - 120px));
+        transition: transform 0.3s ease;
+        touch-action: pan-y;
+    }
+    
+    .weather-details-section.expanded {
+        transform: translateY(0);
+        height: calc(100vh - var(--header-height, 80px));
         border-radius: 0;
-        box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Mobile month selector in preferences */
+    .mobile-month-selector {
+        display: block !important;
+        padding: 0.75rem;
+        border-bottom: 1px solid #d4e3e1;
+    }
+    
+    .mobile-month-selector label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #2c3e3b;
+        margin-bottom: 0.5rem;
+    }
+    
+    .mobile-month-selector select {
+        width: 100%;
+        background: white;
+        color: #2c3e3b;
+        border: 1px solid #d4e3e1;
+        padding: 0.65rem;
+        border-radius: 6px;
+        font-size: 1rem;
     }
     
     /* Ensure touch targets are 44px minimum */

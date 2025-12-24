@@ -165,7 +165,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
     
     // Recalculate header height on window resize
-    window.addEventListener('resize', setDynamicHeaderHeight);
+    window.addEventListener('resize', () => {
+        setDynamicHeaderHeight();
+        updateLegend(); // Update legend on resize to show/hide emoticons
+    });
 });
 
 /**
@@ -355,14 +358,23 @@ function updateMapInfo() {
  */
 function initializeEventListeners() {
     const monthSelect = document.getElementById('monthSelect');
+    const mobileMonthSelect = document.getElementById('mobileMonthSelect');
     
-    // Set the dropdown to current month
+    // Set both dropdowns to current month
     monthSelect.value = state.selectedMonth;
+    if (mobileMonthSelect) {
+        mobileMonthSelect.value = state.selectedMonth;
+    }
     
-    // Month select dropdown
-    monthSelect.addEventListener('change', function(e) {
-        const monthNum = parseInt(e.target.value);
+    // Function to handle month change
+    function handleMonthChange(monthNum) {
         state.selectedMonth = monthNum;
+        
+        // Sync both selectors
+        monthSelect.value = monthNum;
+        if (mobileMonthSelect) {
+            mobileMonthSelect.value = monthNum;
+        }
         
         console.log('Month selected:', state.selectedMonth);
         
@@ -375,7 +387,21 @@ function initializeEventListeners() {
         }
         
         updateMapLayers();
+    }
+    
+    // Month select dropdown (desktop)
+    monthSelect.addEventListener('change', function(e) {
+        const monthNum = parseInt(e.target.value);
+        handleMonthChange(monthNum);
     });
+    
+    // Mobile month select dropdown
+    if (mobileMonthSelect) {
+        mobileMonthSelect.addEventListener('change', function(e) {
+            const monthNum = parseInt(e.target.value);
+            handleMonthChange(monthNum);
+        });
+    }
     
     // Display mode buttons
     const modeButtons = document.querySelectorAll('.mode-btn');
@@ -431,7 +457,8 @@ function initializeEventListeners() {
     updateRangeSlider('sun', sunMin, sunMax);
     
     // Preferences toggle with overlay
-    const preferencesToggle = document.getElementById('preferencesToggle');
+    const preferencesToggleMobile = document.getElementById('preferencesToggle');
+    const preferencesToggleDesktop = document.querySelector('.desktop-toggle');
     const preferencesSidebar = document.querySelector('.climate-preferences-sidebar');
     const preferencesOverlay = document.getElementById('preferencesOverlay');
     const preferencesCloseBtn = document.getElementById('preferencesCloseBtn');
@@ -450,14 +477,29 @@ function initializeEventListeners() {
         }
     }
     
-    preferencesToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (preferencesSidebar.classList.contains('collapsed')) {
-            openPreferences();
-        } else {
-            closePreferences();
-        }
-    });
+    // Mobile toggle button
+    if (preferencesToggleMobile) {
+        preferencesToggleMobile.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (preferencesSidebar.classList.contains('collapsed')) {
+                openPreferences();
+            } else {
+                closePreferences();
+            }
+        });
+    }
+    
+    // Desktop toggle button
+    if (preferencesToggleDesktop) {
+        preferencesToggleDesktop.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (preferencesSidebar.classList.contains('collapsed')) {
+                openPreferences();
+            } else {
+                closePreferences();
+            }
+        });
+    }
     
     // Close preferences when clicking overlay
     if (preferencesOverlay) {
@@ -637,18 +679,34 @@ async function updateMapLayers() {
  */
 function updateLegend() {
     const legendContent = document.getElementById('legend-content-horizontal');
+    const isMobile = window.innerWidth <= 768;
     
     if (state.displayMode === 'overall') {
-        legendContent.innerHTML = `
-            <div class="legend-item">
-                <div class="legend-colors">
-                    <span class="legend-color" style="background: #4ade80;">🌟 Perfect Match</span>
-                    <span class="legend-color" style="background: #facc15;">✓ Good Option</span>
-                    <span class="legend-color" style="background: #fb923c;">~ Acceptable</span>
-                    <span class="legend-color" style="background: #ef4444;">✗ Avoid</span>
+        if (isMobile) {
+            // Mobile legend without emoticons
+            legendContent.innerHTML = `
+                <div class="legend-item">
+                    <div class="legend-colors">
+                        <span class="legend-color" style="background: #4ade80;">Perfect Match</span>
+                        <span class="legend-color" style="background: #facc15;">Good Option</span>
+                        <span class="legend-color" style="background: #fb923c;">Acceptable</span>
+                        <span class="legend-color" style="background: #ef4444;">Avoid</span>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            // Desktop legend with emoticons
+            legendContent.innerHTML = `
+                <div class="legend-item">
+                    <div class="legend-colors">
+                        <span class="legend-color" style="background: #4ade80;">🌟 Perfect Match</span>
+                        <span class="legend-color" style="background: #facc15;">✓ Good Option</span>
+                        <span class="legend-color" style="background: #fb923c;">~ Acceptable</span>
+                        <span class="legend-color" style="background: #ef4444;">✗ Avoid</span>
+                    </div>
+                </div>
+            `;
+        }
     } else {
         const config = layerConfig[state.displayMode];
         if (config) {
@@ -2180,3 +2238,53 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Mobile weather details expandable panel
+if (window.innerWidth <= 768) {
+    const weatherPanel = document.getElementById('weatherDetailsPanelSection');
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+    
+    if (weatherPanel) {
+        // Expand panel when scrolling up at the top
+        weatherPanel.addEventListener('scroll', function() {
+            if (weatherPanel.scrollTop > 50 && !weatherPanel.classList.contains('expanded')) {
+                weatherPanel.classList.add('expanded');
+            }
+        });
+        
+        // Touch handling for collapsing
+        weatherPanel.addEventListener('touchstart', function(e) {
+            if (weatherPanel.scrollTop === 0) {
+                startY = e.touches[0].clientY;
+                isDragging = true;
+            }
+        });
+        
+        weatherPanel.addEventListener('touchmove', function(e) {
+            if (isDragging && weatherPanel.scrollTop === 0) {
+                currentY = e.touches[0].clientY;
+                const diff = currentY - startY;
+                
+                // Only allow dragging down
+                if (diff > 0) {
+                    e.preventDefault();
+                }
+            }
+        });
+        
+        weatherPanel.addEventListener('touchend', function(e) {
+            if (isDragging) {
+                const diff = currentY - startY;
+                
+                // If dragged down more than 50px, collapse
+                if (diff > 50 && weatherPanel.classList.contains('expanded')) {
+                    weatherPanel.classList.remove('expanded');
+                    weatherPanel.scrollTop = 0;
+                }
+                
+                isDragging = false;
+            }
+        });
+    }
+}
