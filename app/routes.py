@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, jsonify, request
+from flask import Blueprint, render_template, jsonify, request, make_response
 import json
+import hashlib
 from pathlib import Path
 import os
 from app.data_loader import get_weather_for_location, get_grid_data
@@ -12,6 +13,41 @@ api_bp = Blueprint('api', __name__, url_prefix='/api')
 # Path to processed weather data
 # __file__ is in app/routes.py, so parent is app/, and we need to go to app/static/data/
 DATA_FILE = Path(__file__).parent / "static" / "data" / "era5_stats.json"
+
+def cached_jsonify(data, max_age=86400, etag_base=None):
+    """
+    Create a JSON response with HTTP caching headers.
+    
+    Args:
+        data: Data to jsonify
+        max_age: Cache duration in seconds (default: 24 hours)
+        etag_base: String to use for ETag generation (default: use data hash)
+    
+    Returns:
+        Flask response with Cache-Control and ETag headers
+    """
+    response = make_response(jsonify(data))
+    
+    # Add Cache-Control header
+    response.headers['Cache-Control'] = f'public, max-age={max_age}'
+    
+    # Generate ETag based on content or provided base
+    if etag_base:
+        etag = hashlib.md5(etag_base.encode()).hexdigest()
+    else:
+        # Use hash of JSON string
+        etag = hashlib.md5(json.dumps(data, sort_keys=True).encode()).hexdigest()
+    
+    response.headers['ETag'] = f'"{etag}"'
+    
+    # Check if client's cached version matches
+    if_none_match = request.headers.get('If-None-Match')
+    if if_none_match and if_none_match.strip('"') == etag:
+        # Client has current version, return 304 Not Modified
+        response.status_code = 304
+        response.data = b''
+    
+    return response
 
 def load_weather_data():
     """Load the processed ERA5 data from file."""
@@ -224,12 +260,14 @@ def get_grid():
         if not grid_data:
             return jsonify({'error': 'Failed to load grid data'}), 500
         
-        return jsonify({
+        # Use shorter cache duration for grid data (1 hour) since bounds vary
+        etag_base = f"grid-{variable}-{month}-{north}-{south}-{east}-{west}-{resolution}"
+        return cached_jsonify({
             'variable': variable,
             'month': month,
             'bounds': bounds,
             'grid': grid_data
-        })
+        }, max_age=3600, etag_base=etag_base)
         
     except (ValueError, TypeError) as e:
         return jsonify({'error': f'Invalid parameter format: {str(e)}'}), 400
@@ -329,7 +367,9 @@ def get_provinces():
             response_data['filtered'] = True
             response_data['feature_count'] = len(province_data.get('features', []))
         
-        return jsonify(response_data)
+        # Cache for 24 hours - province data is static
+        etag_base = f"provinces-{month}-{variable}"
+        return cached_jsonify(response_data, max_age=86400, etag_base=etag_base)
         
     except (ValueError, TypeError) as e:
         return jsonify({'error': f'Invalid parameter format: {str(e)}'}), 400
@@ -406,7 +446,9 @@ def get_countries():
             response_data['filtered'] = True
             response_data['feature_count'] = len(country_data.get('features', []))
         
-        return jsonify(response_data)
+        # Cache for 24 hours - country data is static
+        etag_base = f"countries-{month}-{variable}"
+        return cached_jsonify(response_data, max_age=86400, etag_base=etag_base)
         
     except (ValueError, TypeError) as e:
         return jsonify({'error': f'Invalid parameter format: {str(e)}'}), 400

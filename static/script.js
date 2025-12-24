@@ -28,6 +28,7 @@ const state = {
     updateTimeout: null,
     abortController: null,
     lastFetchBounds: null,  // Track last fetched bounds
+    cacheBuster: null,  // Timestamp for cache-busting when clearing cache
     preferences: {
         tempMin: 18,
         tempMax: 30,
@@ -113,6 +114,17 @@ function setDynamicHeaderHeight() {
         const headerHeight = header.offsetHeight;
         document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
     }
+}
+
+/**
+ * Add cache-busting parameter to URL if cache has been cleared
+ */
+function addCacheBuster(url) {
+    if (state.cacheBuster) {
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}_cb=${state.cacheBuster}`;
+    }
+    return url;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -578,6 +590,77 @@ function initializeEventListeners() {
             }
         });
     });
+    
+    // Clear Cache button
+    const clearCacheBtn = document.getElementById('clearCacheBtn');
+    const cacheStatus = document.getElementById('cacheStatus');
+    
+    if (clearCacheBtn) {
+        clearCacheBtn.addEventListener('click', async function() {
+            try {
+                // Disable button during operation
+                clearCacheBtn.disabled = true;
+                clearCacheBtn.textContent = '🔄 Clearing...';
+                
+                // Show status message
+                cacheStatus.style.display = 'block';
+                cacheStatus.className = 'cache-status info';
+                cacheStatus.textContent = 'Clearing browser cache...';
+                
+                // Clear browser cache if API is available
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    console.log('Service worker caches cleared');
+                }
+                
+                // Add cache-busting timestamp to force fresh data
+                state.cacheBuster = Date.now();
+                
+                // Force reload all current data
+                console.log('Forcing reload of all layers...');
+                
+                // Remove current layers
+                if (state.countryLayer) {
+                    state.map.removeLayer(state.countryLayer);
+                    state.countryLayer = null;
+                }
+                if (state.provinceLayer) {
+                    state.map.removeLayer(state.provinceLayer);
+                    state.provinceLayer = null;
+                }
+                if (state.heatmapOverlay) {
+                    state.map.removeLayer(state.heatmapOverlay);
+                    state.heatmapOverlay = null;
+                }
+                
+                // Reload current view
+                await updateMapLayers();
+                
+                // Show success message
+                cacheStatus.className = 'cache-status success';
+                cacheStatus.textContent = '✓ Cache cleared! Fresh data loaded.';
+                
+                // Reset button
+                clearCacheBtn.disabled = false;
+                clearCacheBtn.innerHTML = '<span class="icon">🔄</span> Clear Cache';
+                
+                // Hide status after 3 seconds
+                setTimeout(() => {
+                    cacheStatus.style.display = 'none';
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Error clearing cache:', error);
+                cacheStatus.className = 'cache-status';
+                cacheStatus.style.background = '#fee2e2';
+                cacheStatus.style.color = '#991b1b';
+                cacheStatus.textContent = '❌ Error clearing cache';
+                clearCacheBtn.disabled = false;
+                clearCacheBtn.innerHTML = '<span class="icon">🔄</span> Clear Cache';
+            }
+        });
+    }
 }
 
 /**
@@ -780,7 +863,8 @@ function updateLegend() {
  * Load regions from API
  */
 function loadRegions() {
-    fetch('/api/regions')
+    const url = addCacheBuster('/api/regions');
+    fetch(url)
         .then(response => response.json())
         .then(data => {
             console.log('Regions loaded:', data);
@@ -792,7 +876,8 @@ function loadRegions() {
  * Fetch weather data from API (yearly data for charts)
  */
 function fetchWeatherData(lat, lng, month) {
-    const url = `/api/weather/yearly?lat=${lat}&lng=${lng}`;
+    const baseUrl = `/api/weather/yearly?lat=${lat}&lng=${lng}`;
+    const url = addCacheBuster(baseUrl);
     
     console.log('Fetching yearly weather data:', url);
     
@@ -1149,10 +1234,10 @@ async function createOverallHeatmap(mapBounds, resolution, month, signal) {
         console.log('Fetching all variables for overall view...');
         
         const [tminResponse, tmaxResponse, precResponse, sunResponse] = await Promise.all([
-            fetch(baseUrl + '&variable=tmin', { signal }),
-            fetch(baseUrl + '&variable=tmax', { signal }),
-            fetch(baseUrl + '&variable=prec', { signal }),
-            fetch(baseUrl + '&variable=sunhours', { signal })
+            fetch(addCacheBuster(baseUrl + '&variable=tmin'), { signal }),
+            fetch(addCacheBuster(baseUrl + '&variable=tmax'), { signal }),
+            fetch(addCacheBuster(baseUrl + '&variable=prec'), { signal }),
+            fetch(addCacheBuster(baseUrl + '&variable=sunhours'), { signal })
         ]);
         
         // Check if map bounds changed
@@ -1388,9 +1473,10 @@ async function createCountryOverlay() {
             };
             
             // Fetch country data from API with viewport bounds
-            const url = `/api/countries?month=${month}&variable=${variable}&` +
+            const baseUrl = `/api/countries?month=${month}&variable=${variable}&` +
                        `north=${mapBounds.north}&south=${mapBounds.south}&` +
                        `east=${mapBounds.east}&west=${mapBounds.west}`;
+            const url = addCacheBuster(baseUrl);
             console.log(`Fetching country data: ${url}`);
             
             const response = await fetch(url);
@@ -1654,9 +1740,10 @@ async function createProvinceOverlay() {
         
         // Always fetch fresh data with viewport filtering
         // (caching disabled because data is viewport-specific)
-        const url = `/api/provinces?month=${month}&variable=${variable}&` +
+        const baseUrl = `/api/provinces?month=${month}&variable=${variable}&` +
                    `north=${mapBounds.north}&south=${mapBounds.south}&` +
                    `east=${mapBounds.east}&west=${mapBounds.west}`;
+        const url = addCacheBuster(baseUrl);
         console.log(`Fetching province data: ${url}`);
         
         const response = await fetch(url);
@@ -1992,8 +2079,8 @@ async function createHeatmapOverlay() {
         
         try {
             const [tminResponse, tmaxResponse] = await Promise.all([
-                fetch(baseUrl + '&variable=tmin', { signal }),
-                fetch(baseUrl + '&variable=tmax', { signal })
+                fetch(addCacheBuster(baseUrl + '&variable=tmin'), { signal }),
+                fetch(addCacheBuster(baseUrl + '&variable=tmax'), { signal })
             ]);
             
             const tminData = await tminResponse.json();
@@ -2058,11 +2145,12 @@ async function createHeatmapOverlay() {
         const url = `/api/grid?variable=${apiVariable}&month=${month}&` +
                     `north=${mapBounds.north}&south=${mapBounds.south}&` +
                     `east=${mapBounds.east}&west=${mapBounds.west}&resolution=${resolution}`;
+        const cacheBustedUrl = addCacheBuster(url);
         
         console.log(`Fetching grid data (zoom=${zoom}, resolution=${resolution})`);
         
         try {
-            const response = await fetch(url, { signal });
+            const response = await fetch(cacheBustedUrl, { signal });
             data = await response.json();
         } catch (error) {
             if (error.name === 'AbortError') {

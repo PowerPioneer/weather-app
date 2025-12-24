@@ -608,6 +608,63 @@ main {
     border-color: #4a7d78;
 }
 
+/* Clear Cache Button */
+.clear-cache-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.clear-cache-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.clear-cache-btn:active {
+    transform: translateY(0);
+}
+
+.clear-cache-btn .icon {
+    font-size: 1.1rem;
+    display: inline-block;
+    transition: transform 0.3s;
+}
+
+.clear-cache-btn:hover .icon {
+    transform: rotate(180deg);
+}
+
+.cache-status {
+    text-align: center;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.cache-status.success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.cache-status.info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
 /* Weather Details Overlay (right side) - Desktop only */
 .weather-details-overlay {
     position: absolute;
