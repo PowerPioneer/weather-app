@@ -55,7 +55,10 @@ def get_value_at_coordinate(lat, lng, variable, month):
                 
                 return float(value)
     except Exception as e:
-        print(f"Error reading {tif_file}: {e}\")\n        return None\n    \n    return None
+        print(f"Error reading {tif_file}: {e}")
+        return None
+    
+    return None
 
 def get_grid_data(variable, month, bounds, resolution=50):
     """
