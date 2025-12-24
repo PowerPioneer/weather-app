@@ -1,20 +1,19 @@
 """
-Load weather data from GeoTIFF files for specific coordinates.
-Calculates averages across all available years for each month.
+Load weather data from optimized GeoTIFF files for specific coordinates.
+Uses pre-computed monthly averages (2020-2024) for faster access and smaller file sizes.
 """
 import rasterio
 from pathlib import Path
 import json
 import numpy as np
 
-# Path to climate data
-ERA5_DIR = Path(__file__).parent.parent / "data" / "era5"
-CRU_DIR = Path(__file__).parent.parent / "data" / "cru"
+# Path to climate data (optimized monthly averages)
+OPTIMIZED_DIR = Path(__file__).parent.parent / "data" / "optimized"
 
 def get_value_at_coordinate(lat, lng, variable, month):
     """
-    Get the average value from all GeoTIFF files for a specific month/location.
-    Averages data across all available years (2020-2024).
+    Get the value from optimized GeoTIFF file for a specific month/location.
+    Uses pre-averaged monthly files (2020-2024 average).
     
     Args:
         lat: Latitude
@@ -23,65 +22,40 @@ def get_value_at_coordinate(lat, lng, variable, month):
         month: Month number (1-12)
     
     Returns:
-        The average value at that coordinate, or None if not found
+        The value at that coordinate, or None if not found
     """
-    # Find the GeoTIFF file for this variable and month
-    # sunhours is in CRU directory, others in ERA5
-    if variable == 'sunhours':
-        var_dir = CRU_DIR / variable
-    else:
-        var_dir = ERA5_DIR / variable
+    # Find the optimized GeoTIFF file for this variable and month
+    var_dir = OPTIMIZED_DIR / variable
     
     if not var_dir.exists():
         return None
     
-    # Find ALL files matching the month (across all years)
-    # Different format for different variables:
-    # tmin/tmax/prec: ...YYYY-MM.tif
-    # sunhours: ...MM.tif
-    tif_files = []
+    # Look for the monthly averaged file
+    tif_file = var_dir / f"{variable}_month_{month:02d}.tif"
     
-    # Try both formats
-    tif_files = list(var_dir.glob(f"*-{month:02d}.tif"))  # YYYY-MM format
-    if not tif_files:
-        tif_files = list(var_dir.glob(f"*_{month:02d}.tif"))  # _MM format
-    
-    if not tif_files:
+    if not tif_file.exists():
         return None
     
-    # Sort to get consistent ordering (all years for this month)
-    tif_files = sorted(tif_files)
-    
-    # Read values from all files and calculate average
-    values = []
-    
-    for tif_file in tif_files:
-        try:
-            with rasterio.open(tif_file) as src:
-                # Convert lat/lng to pixel coordinates
-                row, col = src.index(lng, lat)
+    # Read value from the optimized file
+    try:
+        with rasterio.open(tif_file) as src:
+            # Convert lat/lng to pixel coordinates
+            row, col = src.index(lng, lat)
+            
+            # Read the value at that pixel
+            data = src.read(1)
+            
+            # Check bounds
+            if 0 <= row < data.shape[0] and 0 <= col < data.shape[1]:
+                value = data[row, col]
                 
-                # Read the value at that pixel
-                data = src.read(1)
+                # Check for nodata
+                if src.nodata is not None and value == src.nodata:
+                    return None
                 
-                # Check bounds
-                if 0 <= row < data.shape[0] and 0 <= col < data.shape[1]:
-                    value = data[row, col]
-                    
-                    # Check for nodata
-                    if src.nodata is not None and value == src.nodata:
-                        continue
-                    
-                    values.append(float(value))
-        except Exception as e:
-            print(f"Error reading {tif_file}: {e}")
-            continue
-    
-    # Return average if we have values
-    if values:
-        return float(np.mean(values))
-    
-    return None
+                return float(value)
+    except Exception as e:
+        print(f"Error reading {tif_file}: {e}\")\n        return None\n    \n    return None
 
 def get_grid_data(variable, month, bounds, resolution=50):
     """
@@ -101,25 +75,17 @@ def get_grid_data(variable, month, bounds, resolution=50):
         }
         Note: For prec, values are converted from mm/month to mm/day
     """
-    # sunhours is in CRU directory, others in ERA5
-    if variable == 'sunhours':
-        var_dir = CRU_DIR / variable
-    else:
-        var_dir = ERA5_DIR / variable
+    # Find the optimized GeoTIFF file for this variable and month
+    var_dir = OPTIMIZED_DIR / variable
     
     if not var_dir.exists():
         return None
     
-    # Find the GeoTIFF file(s) for this month
-    tif_files = list(var_dir.glob(f"*-{month:02d}.tif"))
-    if not tif_files:
-        tif_files = list(var_dir.glob(f"*_{month:02d}.tif"))
+    # Look for the monthly averaged file
+    tif_file = var_dir / f"{variable}_month_{month:02d}.tif"
     
-    if not tif_files:
+    if not tif_file.exists():
         return None
-    
-    # Use the first file to get the data (or average if multiple)
-    tif_file = sorted(tif_files)[0]
     
     try:
         with rasterio.open(tif_file) as src:

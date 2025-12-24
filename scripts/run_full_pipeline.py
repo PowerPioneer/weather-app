@@ -102,14 +102,21 @@ def main():
             steps_failed.append("Aggregate Country Data")
             print("\n⚠️  Country aggregation failed, but continuing...")
     
-    # Step 5: Optimize province GeoJSON
+    # Step 5: Optimize GeoTIFF files (reduce from ~530 MB to ~130 MB)
+    if run_script("optimize_geotiffs.py", "Optimize GeoTIFF Files"):
+        steps_completed.append("Optimize GeoTIFF Files")
+    else:
+        steps_failed.append("Optimize GeoTIFF Files")
+        print("\n⚠️  GeoTIFF optimization failed")
+    
+    # Step 6: Optimize province GeoJSON
     if run_script("optimize_province_geojson.py", "Optimize Province GeoJSON Files"):
         steps_completed.append("Optimize Province GeoJSON")
     else:
         steps_failed.append("Optimize Province GeoJSON")
         print("\n⚠️  Province optimization failed")
     
-    # Step 6: Optimize country GeoJSON
+    # Step 7: Optimize country GeoJSON
     if run_script("optimize_country_geojson.py", "Optimize Country GeoJSON Files"):
         steps_completed.append("Optimize Country GeoJSON")
     else:

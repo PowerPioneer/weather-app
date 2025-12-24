@@ -54,11 +54,14 @@ logs/
 # Raw NetCDF files (too large for git)
 data/era5/raw/*.nc
 
-# GeoTIFF files (intermediate, only needed for aggregation)
+# Original GeoTIFF files (unoptimized, replaced by optimized versions)
 data/era5/tmin/*.tif
 data/era5/tmax/*.tif
 data/era5/prec/*.tif
 data/cru/sunhours/*.tif
+
+# Keep optimized GeoTIFFs (these ARE committed for server use)
+!data/optimized/
 
 # Base geometry files (intermediate, large)
 data/provinces/provinces.geojson
