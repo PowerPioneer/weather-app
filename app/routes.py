@@ -65,6 +65,11 @@ def terms():
     """Render the terms of service page."""
     return render_template('terms.html')
 
+@main_bp.route('/cookies')
+def cookies():
+    """Render the cookie policy page."""
+    return render_template('cookies.html')
+
 @api_bp.route('/weather', methods=['GET'])
 def get_weather():
     """Get weather data for a specific location and month."""

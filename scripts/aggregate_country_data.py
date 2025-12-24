@@ -3,13 +3,19 @@ Aggregate province-level climate data to country-level data.
 
 This script reads the province GeoJSON files and aggregates climate data
 by country, then joins it with Natural Earth country boundaries.
+
+Handles distant territories by splitting countries into separate entries
+based on a distance threshold (1000 km from main landmass).
 """
 import json
 from pathlib import Path
 from collections import defaultdict
 import geopandas as gpd
-from shapely.geometry import shape, mapping
+from shapely.geometry import shape, mapping, MultiPolygon, Polygon, Point
+from shapely.ops import transform
 import numpy as np
+import pyproj
+from functools import partial
 
 # Paths
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -88,6 +94,217 @@ COUNTRY_NAME_MAPPING = {
     'Baykonur Cosmodrome': 'Baikonur',
 }
 
+# Distance threshold for splitting territories (in kilometers)
+DISTANCE_THRESHOLD_KM = 1000
+
+# Cache transformers for performance
+_TRANSFORMER_TO_MOLLWEIDE = None
+_TRANSFORMER_TO_WGS84 = None
+
+def _get_transformer_to_mollweide():
+    """Get cached transformer to Mollweide projection."""
+    global _TRANSFORMER_TO_MOLLWEIDE
+    if _TRANSFORMER_TO_MOLLWEIDE is None:
+        _TRANSFORMER_TO_MOLLWEIDE = pyproj.Transformer.from_crs(
+            "EPSG:4326", "ESRI:54009", always_xy=True
+        )
+    return _TRANSFORMER_TO_MOLLWEIDE
+
+def _get_transformer_to_wgs84():
+    """Get cached transformer to WGS84."""
+    global _TRANSFORMER_TO_WGS84
+    if _TRANSFORMER_TO_WGS84 is None:
+        _TRANSFORMER_TO_WGS84 = pyproj.Transformer.from_crs(
+            "ESRI:54009", "EPSG:4326", always_xy=True
+        )
+    return _TRANSFORMER_TO_WGS84
+
+def calculate_area_equal_projection(geom):
+    """
+    Calculate area of a geometry using equal-area projection (World Mollweide).
+    
+    Args:
+        geom: Shapely geometry in WGS84 (EPSG:4326)
+    
+    Returns:
+        Area in square kilometers
+    """
+    transformer = _get_transformer_to_mollweide()
+    geom_projected = transform(transformer.transform, geom)
+    # Area is in square meters, convert to square kilometers
+    return geom_projected.area / 1_000_000
+
+def calculate_centroid_equal_projection(geom):
+    """
+    Calculate centroid of a geometry using equal-area projection.
+    
+    Args:
+        geom: Shapely geometry in WGS84 (EPSG:4326)
+    
+    Returns:
+        Point centroid in WGS84
+    """
+    to_mollweide = _get_transformer_to_mollweide()
+    to_wgs84 = _get_transformer_to_wgs84()
+    
+    geom_projected = transform(to_mollweide.transform, geom)
+    centroid_projected = geom_projected.centroid
+    centroid_wgs84 = transform(to_wgs84.transform, centroid_projected)
+    return centroid_wgs84
+
+def calculate_distance_km(point1, point2):
+    """
+    Calculate distance between two points in kilometers using equal-area projection.
+    
+    Args:
+        point1, point2: Shapely Point objects in WGS84
+    
+    Returns:
+        Distance in kilometers
+    """
+    transformer = _get_transformer_to_mollweide()
+    p1_projected = transform(transformer.transform, point1)
+    p2_projected = transform(transformer.transform, point2)
+    
+    # Distance in meters, convert to kilometers
+    return p1_projected.distance(p2_projected) / 1000
+
+def split_country_by_distance(country_name, geom, distance_threshold_km=DISTANCE_THRESHOLD_KM):
+    """
+    Split a country's MultiPolygon into separate territories based on distance threshold.
+    Groups nearby polygons together to avoid excessive splitting.
+    
+    Args:
+        country_name: Name of the country
+        geom: Shapely geometry (Polygon or MultiPolygon) in WGS84
+        distance_threshold_km: Distance threshold in kilometers
+    
+    Returns:
+        List of tuples: [(territory_name, polygon_geom, area_km2), ...]
+    """
+    # Ensure we have a MultiPolygon
+    if isinstance(geom, Polygon):
+        polygons = [geom]
+    elif isinstance(geom, MultiPolygon):
+        polygons = list(geom.geoms)
+    else:
+        return [(country_name, geom, calculate_area_equal_projection(geom))]
+    
+    # If only one polygon, no splitting needed
+    if len(polygons) == 1:
+        area = calculate_area_equal_projection(polygons[0])
+        return [(country_name, polygons[0], area)]
+    
+    # Calculate area and centroid for each polygon
+    polygon_data = []
+    for poly in polygons:
+        area = calculate_area_equal_projection(poly)
+        centroid = calculate_centroid_equal_projection(poly)
+        polygon_data.append({
+            'polygon': poly,
+            'area': area,
+            'centroid': centroid,
+            'group': None
+        })
+    
+    # Find the largest polygon (main landmass)
+    polygon_data.sort(key=lambda x: x['area'], reverse=True)
+    main_landmass = polygon_data[0]
+    main_centroid = main_landmass['centroid']
+    
+    # Group polygons: those within threshold of main landmass are "main territory"
+    # Others are grouped by proximity to each other
+    main_territory_polygons = [main_landmass]
+    distant_polygons = []
+    
+    for data in polygon_data[1:]:
+        distance = calculate_distance_km(main_centroid, data['centroid'])
+        
+        if distance <= distance_threshold_km:
+            # Part of main landmass
+            main_territory_polygons.append(data)
+        else:
+            # Distant territory
+            distant_polygons.append(data)
+    
+    # Group distant polygons by proximity (cluster polygons within threshold)
+    territory_groups = []
+    for poly_data in distant_polygons:
+        # Try to find an existing group this polygon belongs to
+        added_to_group = False
+        for group in territory_groups:
+            # Check if this polygon is within threshold of any polygon in the group
+            for group_poly in group:
+                distance = calculate_distance_km(poly_data['centroid'], group_poly['centroid'])
+                if distance <= distance_threshold_km:
+                    group.append(poly_data)
+                    added_to_group = True
+                    break
+            if added_to_group:
+                break
+        
+        # If not added to any group, create a new group
+        if not added_to_group:
+            territory_groups.append([poly_data])
+    
+    # Create result list
+    result = []
+    
+    # Add main territory
+    if len(main_territory_polygons) == 1:
+        main_geom = main_territory_polygons[0]['polygon']
+    else:
+        main_geom = MultiPolygon([p['polygon'] for p in main_territory_polygons])
+    main_area = calculate_area_equal_projection(main_geom)
+    result.append((country_name, main_geom, main_area))
+    
+    # Add distant territory groups
+    for group in territory_groups:
+        # Calculate group centroid for naming
+        if len(group) == 1:
+            group_geom = group[0]['polygon']
+            group_centroid = group[0]['centroid']
+        else:
+            group_geom = MultiPolygon([p['polygon'] for p in group])
+            group_centroid = calculate_centroid_equal_projection(group_geom)
+        
+        group_area = calculate_area_equal_projection(group_geom)
+        territory_name = f"{country_name} - {get_territory_name(group_centroid)}"
+        result.append((territory_name, group_geom, group_area))
+    
+    return result
+
+def get_territory_name(centroid):
+    """
+    Generate a descriptive name for a distant territory based on its centroid.
+    
+    Args:
+        centroid: Shapely Point in WGS84
+    
+    Returns:
+        String describing the territory location
+    """
+    lon, lat = centroid.x, centroid.y
+    
+    # Determine general region
+    if lat > 0:
+        ns = "N"
+    else:
+        ns = "S"
+    
+    if lon < -120:
+        region = "Pacific"
+    elif lon < -30:
+        region = "Atlantic"
+    elif lon < 60:
+        region = "Atlantic/Africa"
+    elif lon < 130:
+        region = "Indian Ocean"
+    else:
+        region = "Pacific"
+    
+    return f"{region} {abs(int(lat))}°{ns}"
+
 def aggregate_month_to_countries(month, country_gdf):
     """
     Aggregate province data for a specific month to country level.
@@ -113,8 +330,26 @@ def aggregate_month_to_countries(month, country_gdf):
     
     print(f"Loaded {len(province_data['features'])} provinces")
     
-    # Group climate data by country with area weighting
-    country_climate = defaultdict(lambda: {
+    # First, split country boundaries by distance threshold
+    print("Splitting countries into main territories and distant territories...")
+    split_countries = []
+    for idx, row in country_gdf.iterrows():
+        country_name = row['name']
+        geom = row['geometry']
+        
+        territories = split_country_by_distance(country_name, geom)
+        for territory_name, territory_geom, territory_area in territories:
+            split_countries.append({
+                'name': territory_name,
+                'original_name': country_name,
+                'geometry': territory_geom,
+                'area_km2': territory_area
+            })
+    
+    print(f"Split {len(country_gdf)} countries into {len(split_countries)} territories")
+    
+    # Group climate data by country/territory with area weighting
+    territory_climate = defaultdict(lambda: {
         'tmin_values': [],
         'tmin_areas': [],
         'tmax_values': [],
@@ -125,7 +360,8 @@ def aggregate_month_to_countries(month, country_gdf):
         'sunhours_areas': [],
         'temp_values': [],
         'temp_areas': [],
-        'province_count': 0
+        'province_count': 0,
+        'province_names': []  # Track province names for naming distant territories
     })
     
     for feature in province_data['features']:
@@ -135,9 +371,34 @@ def aggregate_month_to_countries(month, country_gdf):
         # Map province country name to Natural Earth country name
         country_name = COUNTRY_NAME_MAPPING.get(province_country_name, province_country_name)
         
-        # Calculate province area (in square degrees as approximation)
-        geom = shape(feature['geometry'])
-        area = geom.area
+        # Get province geometry and centroid
+        province_geom = shape(feature['geometry'])
+        province_centroid = calculate_centroid_equal_projection(province_geom)
+        
+        # Calculate province area using equal-area projection
+        area_km2 = calculate_area_equal_projection(province_geom)
+        
+        # Find which territory this province belongs to
+        matched_territory = None
+        min_distance = float('inf')
+        
+        for territory in split_countries:
+            if territory['original_name'] == country_name:
+                # Check if province centroid is within this territory
+                if territory['geometry'].contains(province_centroid):
+                    matched_territory = territory['name']
+                    break
+                else:
+                    # Calculate distance to this territory's centroid
+                    territory_centroid = calculate_centroid_equal_projection(territory['geometry'])
+                    distance = calculate_distance_km(province_centroid, territory_centroid)
+                    if distance < min_distance:
+                        min_distance = distance
+                        matched_territory = territory['name']
+        
+        # If no match found, use original country name
+        if matched_territory is None:
+            matched_territory = country_name
         
         # Collect data values with their areas (if not null)
         for key, data_key, area_key in [
@@ -148,24 +409,48 @@ def aggregate_month_to_countries(month, country_gdf):
             ('temp_avg', 'temp_values', 'temp_areas')
         ]:
             value = props.get(key)
-            if value is not None and not (isinstance(value, float) and np.isnan(value)) and area > 0:
-                country_climate[country_name][data_key].append(value)
-                country_climate[country_name][area_key].append(area)
+            if value is not None and not (isinstance(value, float) and np.isnan(value)) and area_km2 > 0:
+                territory_climate[matched_territory][data_key].append(value)
+                territory_climate[matched_territory][area_key].append(area_km2)
         
-        country_climate[country_name]['province_count'] += 1
+        territory_climate[matched_territory]['province_count'] += 1
+        
+        # Track province name and area for naming territories
+        province_name = props.get('name', '')
+        if province_name:
+            territory_climate[matched_territory]['province_names'].append((province_name, area_km2))
     
-    print(f"Aggregated climate data for {len(country_climate)} countries")
+    print(f"Aggregated climate data for {len(territory_climate)} territories")
     
-    # Create a copy of the country GeoDataFrame for this month
-    result_gdf = country_gdf.copy()
+    # Update territory names using actual province names for distant territories
+    for territory in split_countries:
+        territory_name = territory['name']
+        if territory_name in territory_climate:
+            province_names = territory_climate[territory_name].get('province_names', [])
+            
+            # If this is a distant territory (has " - " in name), use the largest province name
+            if ' - ' in territory_name and province_names:
+                # Sort by area (descending) and get the largest province name
+                province_names.sort(key=lambda x: x[1], reverse=True)
+                largest_province_name = province_names[0][0]
+                
+                # Update the territory name
+                old_name = territory_name
+                territory['name'] = largest_province_name
+                
+                # Update the climate data key
+                territory_climate[largest_province_name] = territory_climate.pop(old_name)
     
-    # Add climate data to each country
+    # Create GeoDataFrame from split territories
+    result_gdf = gpd.GeoDataFrame(split_countries, crs="EPSG:4326")
+    
+    # Add climate data to each territory
     climate_data = []
     for idx, row in result_gdf.iterrows():
-        country_name = row['name']
+        territory_name = row['name']
         
-        # Get climate data for this country
-        data = country_climate.get(country_name, {
+        # Get climate data for this territory
+        data = territory_climate.get(territory_name, {
             'tmin_values': [],
             'tmin_areas': [],
             'tmax_values': [],
@@ -224,19 +509,21 @@ def aggregate_month_to_countries(month, country_gdf):
     output_file = COUNTRIES_DIR / f"countries_month_{month:02d}.geojson"
     output_file.parent.mkdir(parents=True, exist_ok=True)
     
-    print(f"Saving {len(result_gdf)} countries to: {output_file}")
+    print(f"Saving {len(result_gdf)} territories to: {output_file}")
     result_gdf.to_file(output_file, driver='GeoJSON')
     
-    countries_with_data = sum(1 for d in climate_data if d['temp_avg'] is not None)
-    print(f"✓ Successfully created country data for month {month:02d}")
-    print(f"  Countries with climate data: {countries_with_data}/{len(result_gdf)}")
+    territories_with_data = sum(1 for d in climate_data if d['temp_avg'] is not None)
+    print(f"✓ Successfully created country/territory data for month {month:02d}")
+    print(f"  Territories with climate data: {territories_with_data}/{len(result_gdf)}")
     return True
 
 def create_metadata():
     """Create metadata file for country aggregated data."""
     metadata = {
-        "description": "Country-level aggregated climate data",
+        "description": "Country-level aggregated climate data with distant territories split",
         "source": "Aggregated from province-level data",
+        "distance_threshold_km": DISTANCE_THRESHOLD_KM,
+        "note": "Countries with territories >1000km from main landmass are split into separate entries",
         "variables": {
             "tmin_mean": {
                 "description": "Mean minimum temperature",

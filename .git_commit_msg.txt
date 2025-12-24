@@ -1,0 +1,37 @@
+Implement territory splitting, standardize policy pages, and fix UI issues
+
+MAJOR CHANGES:
+- Implement distance-based territory splitting (1000km threshold) for countries with overseas territories using equal-area projection (World Mollweide ESRI:54009)
+  Reduces over-fragmentation: 2382 territories -> 376 territories from 258 countries
+  Accurate area-weighted climate data using PyProj 3.6.0+
+  Territory naming uses actual province names
+  Added transformer caching for performance optimization
+
+- Create Cookie Policy page with Enzuzo embedded widget integration
+  Add /cookies route in Flask backend
+  Consistent header design with Back to Map link
+
+- Standardize all policy pages (about, privacy, terms, cookies)
+  Implement three-column header grid layout
+  Add hamburger menu with dropdown functionality
+  Use consistent CSS styling and structure across all pages
+  Version-tagged stylesheet links for cache busting
+
+- Fix UI/UX issues:
+  Increase top margin for climate controls and legend from 20px to 30px
+  Fix zoom prevention on header
+  Fix scrolling on policy pages by overriding fixed positioning
+
+DEPENDENCIES:
+- Add pyproj>=3.6.0 for coordinate transformations
+
+AFFECTED FILES:
+- scripts/aggregate_country_data.py
+- requirements.txt
+- static/style.css
+- templates/index.html
+- templates/about.html
+- templates/privacy.html
+- templates/terms.html
+- templates/cookies.html
+- app/routes.py

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Policy - Where to Go for Great Weather</title>
+    
+    <!-- Enzuzo Cookie Consent Banner -->
+    <script src="https://app.enzuzo.com/scripts/cookiebar/5699ddde-e00d-11f0-97bb-6f1d64467c75"></script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-5N6CMNKFPE"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-5N6CMNKFPE');
+    </script>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251218">
+    <style>
+        body, html {
+            overflow: auto !important;
+            height: auto !important;
+            position: static !important;
+            touch-action: auto !important;
+        }
+
+        main {
+            overflow: auto !important;
+            height: auto !important;
+            display: block !important;
+        }
+
+        .policy-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            line-height: 1.6;
+        }
+
+        .policy-container h1 {
+            color: #D94A3D;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .policy-container h2 {
+            color: #2c3e3b;
+            font-size: 1.75rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .policy-container p {
+            margin-bottom: 1.25rem;
+            color: #444;
+        }
+
+        .policy-container ul {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+
+        .policy-container li {
+            margin-bottom: 0.75rem;
+            color: #444;
+        }
+
+        .back-to-map-link {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            opacity: 0.9;
+            transition: opacity 0.2s;
+        }
+
+        .back-to-map-link:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <div class="header-content">
+                <div class="header-left">
+                    <a href="/" class="back-to-map-link">← Back to Map</a>
+                </div>
+                <div class="header-center">
+                    <h1>Where to Go for Great Weather</h1>
+                    <p>Life's too short for bad weather</p>
+                </div>
+                <div class="header-right">
+                    <button class="hamburger-menu" id="hamburgerMenu" aria-label="Menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <nav class="dropdown-menu" id="dropdownMenu">
+                        <a href="/" class="dropdown-link">Home</a>
+                        <a href="/about" class="dropdown-link">About</a>
+                        <a href="/privacy" class="dropdown-link">Privacy Policy</a>
+                        <a href="/terms" class="dropdown-link">Terms of Service</a>
+                        <a href="/cookies" class="dropdown-link">Cookie Policy</a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="policy-container">
+                <!-- Enzuzo embedded cookie policy -->
+                <div id="__enzuzo-root"></div>
+                <script id="__enzuzo-root-script" src="https://app.enzuzo.com/scripts/cookies/5699ddde-e00d-11f0-97bb-6f1d64467c75"></script>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Hamburger menu functionality
+        const hamburgerMenu = document.getElementById('hamburgerMenu');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+
+        hamburgerMenu.addEventListener('click', () => {
+            hamburgerMenu.classList.toggle('active');
+            dropdownMenu.classList.toggle('active');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!hamburgerMenu.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                hamburgerMenu.classList.remove('active');
+                dropdownMenu.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

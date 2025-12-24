@@ -17,22 +17,33 @@
       gtag('config', 'G-5N6CMNKFPE');
     </script>
     
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251218">
     <style>
         /* Override the body overflow hidden for the about page */
         body, html {
             overflow: auto !important;
             height: auto !important;
-        }
-
-        #app {
-            height: auto !important;
+            position: static !important;
+            touch-action: auto !important;
         }
 
         main {
             overflow: auto !important;
             height: auto !important;
             display: block !important;
+        }
+
+        .back-to-map-link {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            opacity: 0.9;
+            transition: opacity 0.2s;
+        }
+
+        .back-to-map-link:hover {
+            opacity: 1;
         }
 
         .about-container {
@@ -90,23 +101,6 @@
             margin: 1.5rem 0;
             border-radius: 4px;
         }
-
-        .back-link {
-            display: inline-block;
-            margin-bottom: 2rem;
-            color: #D94A3D;
-            text-decoration: none;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            border: 2px solid #D94A3D;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-
-        .back-link:hover {
-            background: #D94A3D;
-            color: white;
-        }
     </style>
 </head>
 <body>
@@ -114,20 +108,31 @@
         <header>
             <div class="header-content">
                 <div class="header-left">
+                    <a href="/" class="back-to-map-link">← Back to Map</a>
                 </div>
                 <div class="header-center">
-                    <h1>About</h1>
-                    <p>Where to Go for Great Weather</p>
+                    <h1>Where to Go for Great Weather</h1>
+                    <p>Life's too short for bad weather</p>
                 </div>
                 <div class="header-right">
+                    <button class="hamburger-menu" id="hamburgerMenu" aria-label="Menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <nav class="dropdown-menu" id="dropdownMenu">
+                        <a href="/" class="dropdown-link">Home</a>
+                        <a href="/about" class="dropdown-link">About</a>
+                        <a href="/privacy" class="dropdown-link">Privacy Policy</a>
+                        <a href="/terms" class="dropdown-link">Terms of Service</a>
+                        <a href="/cookies" class="dropdown-link">Cookie Policy</a>
+                    </nav>
                 </div>
             </div>
         </header>
 
         <main>
             <div class="about-container">
-                <a href="/" class="back-link">← Back to Map</a>
-
                 <h1>About This Project</h1>
                 <p>
                     <strong>Where to Go for Great Weather</strong> is an interactive vacation planning tool that helps you find the best destinations based on weather conditions worldwide. Whether you're seeking sunshine, mild temperatures, or dry seasons, this application visualizes global weather patterns to inform your travel decisions.
@@ -224,5 +229,24 @@
             </div>
         </main>
     </div>
+
+    <script>
+        // Hamburger menu functionality
+        const hamburgerMenu = document.getElementById('hamburgerMenu');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+
+        hamburgerMenu.addEventListener('click', () => {
+            hamburgerMenu.classList.toggle('active');
+            dropdownMenu.classList.toggle('active');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!hamburgerMenu.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                hamburgerMenu.classList.remove('active');
+                dropdownMenu.classList.remove('active');
+            }
+        });
+    </script>
 </body>
 </html>

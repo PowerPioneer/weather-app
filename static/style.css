@@ -8,7 +8,7 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    touch-action: pan-y; /* Prevent double-tap zoom and pinch zoom on page */
+    touch-action: none; /* Prevent all touch gestures including pinch zoom */
     overflow: hidden;
     position: fixed;
     width: 100%;
@@ -24,6 +24,7 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
+    touch-action: none; /* Prevent touch zoom on app container */
 }
 
 header {
@@ -37,6 +38,7 @@ header {
     right: 0;
     z-index: 1001;
     min-height: fit-content;
+    touch-action: none; /* Prevent touch zoom on header */
 }
 
 .header-content {
@@ -224,7 +226,7 @@ main {
 /* Climate Preferences Sidebar (left side, collapsible) */
 .climate-preferences-sidebar {
     position: absolute;
-    top: 20px;  /* Aligned with zoom controls */
+    top: 30px;  /* Aligned with zoom controls */
     left: 70px;  /* Right next to zoom controls */
     background: rgba(255, 255, 255, 0.97);
     border-radius: 12px;
@@ -427,7 +429,7 @@ main {
 /* Legend Overlay (top center) */
 .legend-overlay {
     position: absolute;
-    top: 20px;
+    top: 30px;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(255, 255, 255, 0.95);
@@ -593,6 +595,11 @@ main {
 
 .map .leaflet-tile-pane {
     filter: brightness(0.95) contrast(1.05);
+}
+
+.leaflet-control-zoom {
+    margin-top: 30px !important;
+    margin-left: 10px !important;
 }
 
 .leaflet-control-attribution {

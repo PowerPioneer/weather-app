@@ -1,6 +1,8 @@
 {
-  "description": "Country-level aggregated climate data",
+  "description": "Country-level aggregated climate data with distant territories split",
   "source": "Aggregated from province-level data",
+  "distance_threshold_km": 1000,
+  "note": "Countries with territories >1000km from main landmass are split into separate entries",
   "variables": {
     "tmin_mean": {
       "description": "Mean minimum temperature",
