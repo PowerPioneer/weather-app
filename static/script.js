@@ -1633,7 +1633,16 @@ async function createCountryOverlay() {
                 let valueStr = 'No data';
                 if (value !== null && value !== undefined) {
                     if (variable === 'overall') {
-                        valueStr = `Match: ${(value * 100).toFixed(0)}%`;
+                        // Recalculate based on current user preferences
+                        const tempAvg = props.temp_avg;
+                        const prec = props.prec_mean;
+                        const sunhours = props.sunhours_mean;
+                        const result = calculateOverallScore(tempAvg, prec, sunhours);
+                        if (result) {
+                            valueStr = `${result.matchCount}/${result.totalCriteria} criteria`;
+                        } else {
+                            valueStr = 'No data';
+                        }
                     } else if (variable === 'temperature') {
                         const tempC = value;
                         const tempF = (tempC * 9/5) + 32;
@@ -1912,7 +1921,16 @@ async function createProvinceOverlay() {
                 if (value !== null && value !== undefined) {
                     let valueStr;
                     if (variable === 'overall') {
-                        valueStr = (value * 100).toFixed(0) + '% match';
+                        // Recalculate based on current user preferences
+                        const tempAvg = props.temp_avg;
+                        const prec = props.prec_mean;
+                        const sunhours = props.sunhours_mean;
+                        const result = calculateOverallScore(tempAvg, prec, sunhours);
+                        if (result) {
+                            valueStr = `${result.matchCount}/${result.totalCriteria} criteria`;
+                        } else {
+                            valueStr = 'No data';
+                        }
                     } else if (variable === 'temperature') {
                         // Convert temperature if in Fahrenheit mode
                         const displayValue = state.temperatureUnit === 'F' 

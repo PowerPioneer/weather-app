@@ -95,7 +95,7 @@ COUNTRY_NAME_MAPPING = {
 }
 
 # Distance threshold for splitting territories (in kilometers)
-DISTANCE_THRESHOLD_KM = 1000
+DISTANCE_THRESHOLD_KM = 1500
 
 # Cache transformers for performance
 _TRANSFORMER_TO_MOLLWEIDE = None
@@ -379,22 +379,36 @@ def aggregate_month_to_countries(month, country_gdf):
         area_km2 = calculate_area_equal_projection(province_geom)
         
         # Find which territory this province belongs to
+        # Use intersection area to assign provinces to territories
         matched_territory = None
-        min_distance = float('inf')
+        best_intersection_area = 0
         
         for territory in split_countries:
             if territory['original_name'] == country_name:
-                # Check if province centroid is within this territory
-                if territory['geometry'].contains(province_centroid):
-                    matched_territory = territory['name']
-                    break
-                else:
-                    # Calculate distance to this territory's centroid
-                    territory_centroid = calculate_centroid_equal_projection(territory['geometry'])
-                    distance = calculate_distance_km(province_centroid, territory_centroid)
-                    if distance < min_distance:
-                        min_distance = distance
+                try:
+                    # Calculate intersection area between province and territory
+                    intersection = province_geom.intersection(territory['geometry'])
+                    if not intersection.is_empty:
+                        intersection_area = calculate_area_equal_projection(intersection)
+                        
+                        # Assign to territory with largest intersection
+                        if intersection_area > best_intersection_area:
+                            best_intersection_area = intersection_area
+                            matched_territory = territory['name']
+                except Exception as e:
+                    # If intersection fails, fall back to centroid distance
+                    if territory['geometry'].contains(province_centroid):
                         matched_territory = territory['name']
+                        break
+                    else:
+                        territory_centroid = calculate_centroid_equal_projection(territory['geometry'])
+                        distance = calculate_distance_km(province_centroid, territory_centroid)
+                        # Use distance as a proxy (smaller distance = better match)
+                        # Convert to pseudo-area for comparison
+                        pseudo_area = max(0, 1000000 - distance * 1000)
+                        if pseudo_area > best_intersection_area:
+                            best_intersection_area = pseudo_area
+                            matched_territory = territory['name']
         
         # If no match found, use original country name
         if matched_territory is None:
@@ -505,6 +519,15 @@ def aggregate_month_to_countries(month, country_gdf):
     for col in ['tmin_mean', 'tmax_mean', 'prec_mean', 'sunhours_mean', 'temp_avg', 'overall_score', 'province_count']:
         result_gdf[col] = [d[col] for d in climate_data]
     
+    # Filter out territories with no climate data (no provinces matched)
+    # These are typically tiny uninhabited islands that have no province-level data
+    territories_before = len(result_gdf)
+    result_gdf = result_gdf[result_gdf['province_count'] > 0].copy()
+    territories_removed = territories_before - len(result_gdf)
+    
+    if territories_removed > 0:
+        print(f"Removed {territories_removed} empty territories (no provinces matched)")
+    
     # Save to file as GeoJSON
     output_file = COUNTRIES_DIR / f"countries_month_{month:02d}.geojson"
     output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -514,7 +537,7 @@ def aggregate_month_to_countries(month, country_gdf):
     
     territories_with_data = sum(1 for d in climate_data if d['temp_avg'] is not None)
     print(f"✓ Successfully created country/territory data for month {month:02d}")
-    print(f"  Territories with climate data: {territories_with_data}/{len(result_gdf)}")
+    print(f"  Territories with data: {len(result_gdf)} (filtered from {territories_before})")
     return True
 
 def create_metadata():
