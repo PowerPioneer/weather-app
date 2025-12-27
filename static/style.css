@@ -784,6 +784,25 @@ main {
     margin-left: 10px !important;
 }
 
+/* Popup styling - center country/province name */
+.leaflet-popup-content-wrapper {
+    text-align: center;
+}
+
+.leaflet-popup-content {
+    margin: 10px 14px;
+    line-height: 1.6;
+}
+
+.leaflet-popup-content strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.leaflet-tooltip {
+    text-align: center;
+}
+
 .leaflet-control-attribution {
     background-color: rgba(255, 255, 255, 0.8);
     font-size: 0.75rem;

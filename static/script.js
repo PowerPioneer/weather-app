@@ -1446,6 +1446,9 @@ function calculateOverallScore(tempAvg, prec, sunhours) {
     const prefs = state.preferences;
     let matchCount = 0;
     let totalCriteria = 0;
+    let tempMatch = null;
+    let precMatch = null;
+    let sunMatch = null;
     
     // Temperature match (using average of tmin and tmax)
     // Note: tempAvg from data is always in Celsius, so convert if user is in Fahrenheit
@@ -1460,7 +1463,8 @@ function calculateOverallScore(tempAvg, prec, sunhours) {
             tempToCompare = celsiusToFahrenheit(tempAvg);
         }
         
-        if (tempToCompare >= minTemp && tempToCompare <= maxTemp) {
+        tempMatch = (tempToCompare >= minTemp && tempToCompare <= maxTemp);
+        if (tempMatch) {
             matchCount++;
         }
     }
@@ -1468,7 +1472,8 @@ function calculateOverallScore(tempAvg, prec, sunhours) {
     // Rainfall match
     if (prec !== null && prec !== undefined) {
         totalCriteria++;
-        if (prec >= prefs.rainMin && prec <= prefs.rainMax) {
+        precMatch = (prec >= prefs.rainMin && prec <= prefs.rainMax);
+        if (precMatch) {
             matchCount++;
         }
     }
@@ -1476,7 +1481,8 @@ function calculateOverallScore(tempAvg, prec, sunhours) {
     // Sunshine match
     if (sunhours !== null && sunhours !== undefined) {
         totalCriteria++;
-        if (sunhours >= prefs.sunMin && sunhours <= prefs.sunMax) {
+        sunMatch = (sunhours >= prefs.sunMin && sunhours <= prefs.sunMax);
+        if (sunMatch) {
             matchCount++;
         }
     }
@@ -1501,7 +1507,46 @@ function calculateOverallScore(tempAvg, prec, sunhours) {
     }
     
     const score = matchCount / totalCriteria;
-    return { score, color, matchCount, totalCriteria };
+    return { 
+        score, 
+        color, 
+        matchCount, 
+        totalCriteria,
+        tempMatch,
+        precMatch,
+        sunMatch
+    };
+}
+
+/**
+ * Format criteria matches as colored or grayscale icons
+ * @param {Object} result - Result from calculateOverallScore
+ * @returns {string} HTML string with icons (colored if match, grayscale if not)
+ */
+function formatCriteriaIcons(result) {
+    if (!result) return 'No data';
+    
+    const icons = [];
+    
+    // Temperature - colored if match, grayscale if not
+    if (result.tempMatch !== null) {
+        const filter = result.tempMatch ? '' : 'filter: grayscale(100%); opacity: 0.5;';
+        icons.push(`<span style="${filter}">🌡️</span>`);
+    }
+    
+    // Rainfall - colored if match, grayscale if not
+    if (result.precMatch !== null) {
+        const filter = result.precMatch ? '' : 'filter: grayscale(100%); opacity: 0.5;';
+        icons.push(`<span style="${filter}">🌧️</span>`);
+    }
+    
+    // Sunshine - colored if match, grayscale if not
+    if (result.sunMatch !== null) {
+        const filter = result.sunMatch ? '' : 'filter: grayscale(100%); opacity: 0.5;';
+        icons.push(`<span style="${filter}">☀️</span>`);
+    }
+    
+    return icons.join(' ');
 }
 
 /**
@@ -1714,11 +1759,7 @@ async function createCountryOverlay() {
                         const prec = props.prec_mean;
                         const sunhours = props.sunhours_mean;
                         const result = calculateOverallScore(tempAvg, prec, sunhours);
-                        if (result) {
-                            valueStr = `${result.matchCount}/${result.totalCriteria} criteria`;
-                        } else {
-                            valueStr = 'No data';
-                        }
+                        valueStr = formatCriteriaIcons(result);
                     } else if (variable === 'temperature') {
                         const tempC = value;
                         const tempF = (tempC * 9/5) + 32;
@@ -1736,7 +1777,7 @@ async function createCountryOverlay() {
                 
                 // Bind popup
                 layer.bindPopup(
-                    `<strong>${countryName}</strong><br>${valueStr}`,
+                    `<strong>${countryName}</strong><div style="margin-top: 2px;">${valueStr}</div>`,
                     { closeButton: false, autoPan: false }
                 );
                 
@@ -2063,11 +2104,7 @@ async function createProvinceOverlay() {
                         const prec = props.prec_mean;
                         const sunhours = props.sunhours_mean;
                         const result = calculateOverallScore(tempAvg, prec, sunhours);
-                        if (result) {
-                            valueStr = `${result.matchCount}/${result.totalCriteria} criteria`;
-                        } else {
-                            valueStr = 'No data';
-                        }
+                        valueStr = formatCriteriaIcons(result);
                     } else if (variable === 'temperature') {
                         // Convert temperature if in Fahrenheit mode
                         const displayValue = state.temperatureUnit === 'F' 
@@ -2083,7 +2120,7 @@ async function createProvinceOverlay() {
                     const countryName = props.admin || '';
                     
                     layer.bindTooltip(
-                        `<strong>${provinceName}</strong><br>${countryName}<br>${valueStr}`,
+                        `<strong>${provinceName}</strong><div style="margin-top: 2px;">${countryName ? countryName + '<br>' : ''}${valueStr}</div>`,
                         { sticky: true }
                     );
                 }

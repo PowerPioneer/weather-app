@@ -563,7 +563,11 @@ def get_combined_data():
             response_data['feature_count'] = len(data.get('features', []))
         
         # Cache for 24 hours - combined data is static
-        etag_base = f"combined-{layer_type}-{month}"
+        # Include bounds in ETag when filtering to avoid cache collisions across different viewports
+        if bounds:
+            etag_base = f"combined-{layer_type}-{month}-{bounds['north']}-{bounds['south']}-{bounds['east']}-{bounds['west']}"
+        else:
+            etag_base = f"combined-{layer_type}-{month}"
         return cached_jsonify(response_data, max_age=86400, etag_base=etag_base)
         
     except (ValueError, TypeError) as e:
