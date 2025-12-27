@@ -23,7 +23,7 @@
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251218" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251227" type="text/css">
 </head>
 <body>
     <div id="app">
@@ -113,7 +113,7 @@
                         <div class="display-mode-section">
                             <h3>Display Mode</h3>
                             <div class="mode-buttons">
-                                <button class="mode-btn active" data-mode="overall">
+                                <button class="mode-btn mode-btn-overall active" data-mode="overall">
                                     <span class="icon">🌍</span> Overall
                                 </button>
                                 <button class="mode-btn" data-mode="temperature">
@@ -121,6 +121,9 @@
                                 </button>
                                 <button class="mode-btn" data-mode="rainfall">
                                     <span class="icon">🌧️</span> Rain
+                                </button>
+                                <button class="mode-btn" data-mode="safety">
+                                    <span class="icon">⚠️</span> Safety
                                 </button>
                                 <button class="mode-btn" data-mode="sunshine">
                                     <span class="icon">☀️</span> Sun
@@ -178,6 +181,18 @@
                             <div class="slider-track"></div>
                         </div>
                     </div>
+                    
+                        <!-- Safety Level Selector -->
+                        <div class="preference-section">
+                            <h3>Safety: <span id="safetyLevel">Caution</span></h3>
+                            <input type="range" id="safetySlider" class="safety-slider" min="1" max="4" value="2" step="1">
+                            <div class="safety-labels">
+                                <span>Normal</span>
+                                <span>Caution</span>
+                                <span>Reconsider</span>
+                                <span>Do Not Travel</span>
+                            </div>
+                        </div>
                     
                         <!-- Temperature Unit Selector -->
                         <div class="preference-section">
@@ -264,6 +279,6 @@
         };
     </script>
     
-    <script src="{{ url_for('static', filename='script.js') }}?v=20251218"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=20251227L"></script>
 </body>
 </html>

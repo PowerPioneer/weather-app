@@ -37,7 +37,8 @@ const state = {
         rainMin: 0,
         rainMax: 4,
         sunMin: 6,
-        sunMax: 15
+        sunMax: 15,
+        maxSafety: 2
     }
 };
 
@@ -79,6 +80,12 @@ const colorGradients = {
         { value: 10, color: [255, 165, 0] },      // Orange
         { value: 12, color: [255, 140, 0] },      // Dark orange
         { value: 15, color: [255, 100, 0] }       // Red-orange (maximum sun)
+    ],
+    safety: [
+        { value: 1, color: [255, 255, 255] },     // White - Level 1 (Normal)
+        { value: 2, color: [255, 235, 59] },      // Yellow - Level 2 (Exercise Increased Caution)
+        { value: 3, color: [255, 152, 0] },       // Orange - Level 3 (Reconsider Travel)
+        { value: 4, color: [244, 67, 54] }        // Red - Level 4 (Do Not Travel)
     ]
 };
 
@@ -104,6 +111,13 @@ const layerConfig = {
         range: [0, 20],
         unit: 'mm/day',
         gradient: colorGradients.rainfall
+    },
+    safety: {
+        label: 'Travel Safety',
+        color: '#f44336',
+        range: [1, 4],
+        unit: '',
+        gradient: colorGradients.safety
     }
 };
 
@@ -467,6 +481,33 @@ function initializeEventListeners() {
     const sunMax = document.getElementById('sunMax');
     sunMin.addEventListener('input', () => updateRangeSlider('sun', sunMin, sunMax));
     sunMax.addEventListener('input', () => updateRangeSlider('sun', sunMin, sunMax));
+    
+    // Safety level slider
+    const safetySlider = document.getElementById('safetySlider');
+    if (safetySlider) {
+        safetySlider.addEventListener('input', function() {
+            // Slider values directly correspond to safety levels: 1, 2, 3, 4
+            const level = parseInt(this.value);
+            state.preferences.maxSafety = level;
+            
+            const levelNames = {
+                1: 'Normal',
+                2: 'Caution',
+                3: 'Reconsider',
+                4: 'All Levels'
+            };
+            
+            document.getElementById('safetyLevel').textContent = levelNames[level];
+            
+            // Trigger map update if in overall mode
+            if (state.displayMode === 'overall') {
+                if (state.updateTimeout) {
+                    clearTimeout(state.updateTimeout);
+                }
+                state.updateTimeout = setTimeout(updateMapLayers, 300);
+            }
+        });
+    }
     
     // Initialize displays
     updateRangeSlider('temp', tempMin, tempMax);
@@ -871,6 +912,18 @@ function updateLegend() {
                 </div>
             `;
         }
+    } else if (state.displayMode === 'safety') {
+        // Safety legend
+        legendContent.innerHTML = `
+            <div class="legend-item">
+                <div class="legend-colors">
+                    <span class="legend-color" style="background: white; border: 1px solid #ddd;">Normal</span>
+                    <span class="legend-color" style="background: #ffeb3b;">Caution</span>
+                    <span class="legend-color" style="background: #ff9800;">Reconsider</span>
+                    <span class="legend-color" style="background: #f44336; color: white;">Do Not Travel</span>
+                </div>
+            </div>
+        `;
     } else {
         const config = layerConfig[state.displayMode];
         if (config) {
@@ -946,7 +999,7 @@ function loadRegions() {
 /**
  * Fetch weather data from API (yearly data for charts)
  */
-function fetchWeatherData(lat, lng, month) {
+function fetchWeatherData(lat, lng, month, properties = null) {
     const baseUrl = `/api/weather/yearly?lat=${lat}&lng=${lng}`;
     const url = addCacheBuster(baseUrl);
     
@@ -956,7 +1009,7 @@ function fetchWeatherData(lat, lng, month) {
         .then(response => response.json())
         .then(data => {
             console.log('Yearly weather data:', data);
-            displayWeatherCharts(data, month);
+            displayWeatherCharts(data, month, properties);
         })
         .catch(error => {
             console.error('Error fetching weather data:', error);
@@ -976,7 +1029,7 @@ let weatherCharts = {
 /**
  * Display weather information as charts
  */
-function displayWeatherCharts(data, currentMonth) {
+function displayWeatherCharts(data, currentMonth, properties = null) {
     // Update both overlay and section weather info containers
     const weatherInfoContainers = document.querySelectorAll('.weather-info');
     
@@ -1013,7 +1066,7 @@ function displayWeatherCharts(data, currentMonth) {
         : data.data.tmin;
     
     // Create HTML structure for charts in both containers
-    const chartHTML = `
+    let chartHTML = `
         <div style="padding: 1rem 0;">
             <div style="margin-bottom: 1.5rem;">
                 <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">🌡️ Temperature</h4>
@@ -1027,6 +1080,52 @@ function displayWeatherCharts(data, currentMonth) {
                 <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">☀️ Sunshine</h4>
                 <canvas class="sun-chart" style="max-height: 120px;"></canvas>
             </div>
+    `;
+    
+    // Add safety advisory section if available (country-level only, Level 2+)
+    if (properties && properties.safety_level && properties.safety_level > 1 && properties.safety_description) {
+        const safetyLevelText = {
+            1: 'Level 1: Normal Precautions',
+            2: 'Level 2: Exercise Increased Caution',
+            3: 'Level 3: Reconsider Travel',
+            4: 'Level 4: Do Not Travel'
+        }[properties.safety_level] || 'Unknown';
+        
+        const safetyColor = {
+            1: '#757575',
+            2: '#f57c00',
+            3: '#e65100',
+            4: '#c62828'
+        }[properties.safety_level] || '#000';
+        
+        const safetyIcon = '⚠️';
+        
+        chartHTML += `
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid #e0e0e0;">
+                <h4 style="margin: 0 0 0.75rem 0; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>${safetyIcon}</span>
+                    <span>Travel Advisory</span>
+                </h4>
+                <div style="background: #f5f5f5; padding: 0.75rem; border-radius: 6px; border-left: 4px solid ${safetyColor};">
+                    <div style="font-weight: 600; color: ${safetyColor}; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                        ${safetyLevelText}
+                    </div>
+                    <div style="font-size: 0.8rem; color: #555; line-height: 1.4;">
+                        ${properties.safety_summary || properties.safety_description}
+                    </div>
+                    ${properties.safety_url ? `
+                        <div style="margin-top: 0.5rem;">
+                            <a href="${properties.safety_url}" target="_blank" rel="noopener noreferrer" style="font-size: 0.75rem; color: #2563eb; text-decoration: none;">
+                                View full advisory →
+                            </a>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    chartHTML += `
         </div>
     `;
     
@@ -1442,8 +1541,26 @@ async function createOverallHeatmap(mapBounds, resolution, month, signal) {
  * @param {number} prec - Precipitation in mm/day
  * @param {number} sunhours - Sunshine hours per day
  */
-function calculateOverallScore(tempAvg, prec, sunhours) {
+function calculateOverallScore(tempAvg, prec, sunhours, safetyLevel = null) {
     const prefs = state.preferences;
+    
+    // First check safety level - if unacceptable, return red immediately
+    if (safetyLevel !== null && safetyLevel !== undefined) {
+        if (safetyLevel > prefs.maxSafety) {
+            // Safety level exceeds acceptable threshold
+            return {
+                score: 0,
+                color: [239, 68, 68, 0.7],  // Red - unsafe
+                matchCount: 0,
+                totalCriteria: 4,
+                tempMatch: null,
+                precMatch: null,
+                sunMatch: null,
+                safetyMatch: false
+            };
+        }
+    }
+    
     let matchCount = 0;
     let totalCriteria = 0;
     let tempMatch = null;
@@ -1514,7 +1631,8 @@ function calculateOverallScore(tempAvg, prec, sunhours) {
         totalCriteria,
         tempMatch,
         precMatch,
-        sunMatch
+        sunMatch,
+        safetyMatch: true  // If we got here, safety is acceptable
     };
 }
 
@@ -1660,7 +1778,8 @@ async function createCountryOverlay() {
             'temperature': 'temp_avg',
             'rainfall': 'prec_mean',
             'sunshine': 'sunhours_mean',
-            'overall': 'overall_score'
+            'overall': 'overall_score',
+            'safety': 'safety_level'
         };
         
         const dataField = variableFieldMap[variable];
@@ -1688,18 +1807,14 @@ async function createCountryOverlay() {
                 const tempAvg = props.temp_avg;
                 const prec = props.prec_mean;
                 const sunhours = props.sunhours_mean;
+                const safetyLevel = props.safety_level;
                 
-                const result = calculateOverallScore(tempAvg, prec, sunhours);
+                const result = calculateOverallScore(tempAvg, prec, sunhours, safetyLevel);
                 
                 if (result) {
                     const [r, g, b, a] = result.color;
                     fillColor = `rgb(${r}, ${g}, ${b})`;
                     fillOpacity = a;
-                    
-                    // Debug logging for specific countries
-                    if (props.name === 'South Korea' || props.name === 'Japan') {
-                        console.log(`${props.name}: fillColor=${fillColor}, fillOpacity=${fillOpacity}, result=`, result);
-                    }
                 } else {
                     fillColor = '#ccc';
                     fillOpacity = 0.1;
@@ -1758,7 +1873,8 @@ async function createCountryOverlay() {
                         const tempAvg = props.temp_avg;
                         const prec = props.prec_mean;
                         const sunhours = props.sunhours_mean;
-                        const result = calculateOverallScore(tempAvg, prec, sunhours);
+                        const safetyLevel = props.safety_level;
+                        const result = calculateOverallScore(tempAvg, prec, sunhours, safetyLevel);
                         valueStr = formatCriteriaIcons(result);
                     } else if (variable === 'temperature') {
                         const tempC = value;
@@ -1770,14 +1886,50 @@ async function createCountryOverlay() {
                         valueStr = `${value.toFixed(1)} mm/day`;
                     } else if (variable === 'sunshine') {
                         valueStr = `${value.toFixed(1)} hours/day`;
+                    } else if (variable === 'safety') {
+                        const safetyText = {
+                            1: 'Level 1: Normal Precautions',
+                            2: 'Level 2: Exercise Caution',
+                            3: 'Level 3: Reconsider Travel',
+                            4: 'Level 4: Do Not Travel'
+                        };
+                        valueStr = safetyText[value] || 'No data';
                     }
                 }
                 
                 const countryName = props.name || 'Unknown';
                 
+                // Build popup content with travel advisory if available
+                let popupContent = `<strong>${countryName}</strong><div style="margin-top: 2px;">${valueStr}</div>`;
+                
+                // Add travel advisory information if available (only for Level 2+)
+                if (props.safety_level && props.safety_level > 1 && props.safety_description) {
+                    const safetyLevelText = {
+                        1: 'Normal Precautions',
+                        2: 'Exercise Increased Caution',
+                        3: 'Reconsider Travel',
+                        4: 'Do Not Travel'
+                    }[props.safety_level] || 'Unknown';
+                    
+                    const safetyColor = {
+                        1: '#757575',
+                        2: '#f57c00',
+                        3: '#e65100',
+                        4: '#c62828'
+                    }[props.safety_level] || '#000';
+                    
+                    popupContent += `
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #ddd;">
+                            <div style="font-weight: 600; color: ${safetyColor}; font-size: 0.9em;">
+                                ⚠️ ${safetyLevelText}
+                            </div>
+                        </div>
+                    `;
+                }
+                
                 // Bind popup
                 layer.bindPopup(
-                    `<strong>${countryName}</strong><div style="margin-top: 2px;">${valueStr}</div>`,
+                    popupContent,
                     { closeButton: false, autoPan: false }
                 );
                 
@@ -1877,11 +2029,12 @@ async function createCountryOverlay() {
                     });
                     document.querySelectorAll('.region-name').forEach(el => {
                         el.textContent = '';  // No region for countries
+                        el.closest('p').style.display = 'none';  // Hide the Region: line
                     });
                     
                     // Fetch weather data for country center
                     if (state.selectedMonth) {
-                        fetchWeatherData(lat, lng, state.selectedMonth);
+                        fetchWeatherData(lat, lng, state.selectedMonth, props);
                     }
                 });
             }
@@ -1911,6 +2064,8 @@ async function createCountryOverlay() {
                         labelText = value.toFixed(1);
                     } else if (variable === 'sunshine') {
                         labelText = value.toFixed(1);
+                    } else if (variable === 'safety') {
+                        labelText = 'L' + value;
                     }
                     
                     // Calculate centroid
@@ -2014,7 +2169,8 @@ async function createProvinceOverlay() {
             'temperature': 'temp_avg',
             'rainfall': 'prec_mean',
             'sunshine': 'sunhours_mean',
-            'overall': 'overall_score'
+            'overall': 'overall_score',
+            'safety': 'safety_level'
         };
         
         const dataField = variableFieldMap[variable];
@@ -2112,6 +2268,14 @@ async function createProvinceOverlay() {
                             : value;
                         const unit = state.temperatureUnit === 'F' ? '°F' : '°C';
                         valueStr = displayValue.toFixed(1) + ' ' + unit;
+                    } else if (variable === 'safety') {
+                        const safetyText = {
+                            1: 'Level 1: Normal Precautions',
+                            2: 'Level 2: Exercise Caution',
+                            3: 'Level 3: Reconsider Travel',
+                            4: 'Level 4: Do Not Travel'
+                        };
+                        valueStr = safetyText[value] || 'No data';
                     } else {
                         valueStr = value.toFixed(1) + ' ' + layerConfig[variable].unit;
                     }
@@ -2225,6 +2389,7 @@ async function createProvinceOverlay() {
                         });
                         document.querySelectorAll('.region-name').forEach(el => {
                             el.textContent = props.name || 'Unknown';
+                            el.closest('p').style.display = 'block';  // Show the Region: line
                         });
                         
                         // Fetch weather data for province center
@@ -2262,6 +2427,8 @@ async function createProvinceOverlay() {
                         labelText = value.toFixed(1);
                     } else if (variable === 'sunshine') {
                         labelText = value.toFixed(1);
+                    } else if (variable === 'safety') {
+                        labelText = 'L' + value;
                     }
                     
                     // Calculate centroid

@@ -6,6 +6,8 @@ by country, then joins it with Natural Earth country boundaries.
 
 Handles distant territories by splitting countries into separate entries
 based on a distance threshold (1000 km from main landmass).
+
+Also integrates U.S. State Department travel advisories.
 """
 import json
 from pathlib import Path
@@ -22,6 +24,7 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 PROVINCES_DIR = DATA_DIR / "provinces" / "aggregated"
 COUNTRIES_DIR = DATA_DIR / "countries" / "aggregated"
 COUNTRIES_BASE_DIR = DATA_DIR / "countries"
+TRAVEL_ADVISORIES_FILE = DATA_DIR / "travel_advisories.json"
 
 # Name mapping from province data names to Natural Earth country names
 # Province data uses more formal names, Natural Earth uses shorter versions
@@ -100,6 +103,88 @@ DISTANCE_THRESHOLD_KM = 1500
 # Cache transformers for performance
 _TRANSFORMER_TO_MOLLWEIDE = None
 _TRANSFORMER_TO_WGS84 = None
+
+
+def load_travel_advisories():
+    """
+    Load travel advisories from JSON file.
+    
+    Returns:
+        dict: Travel advisory data by country name, or None if file doesn't exist
+    """
+    if not TRAVEL_ADVISORIES_FILE.exists():
+        print(f"\nℹ️  Travel advisories file not found: {TRAVEL_ADVISORIES_FILE}")
+        print("   Run 'python scripts/download_travel_advisories.py' to download advisories.")
+        return None
+    
+    try:
+        with open(TRAVEL_ADVISORIES_FILE, 'r', encoding='utf-8') as f:
+            advisories = json.load(f)
+        print(f"✓ Loaded travel advisories for {len(advisories)} countries")
+        return advisories
+    except Exception as e:
+        print(f"⚠️  Error loading travel advisories: {e}")
+        return None
+
+
+def add_travel_advisories_to_gdf(gdf, travel_advisories):
+    """
+    Add travel advisory data to GeoDataFrame.
+    
+    Args:
+        gdf: GeoDataFrame with country/territory data
+        travel_advisories: Dict of travel advisory data by country name
+    
+    Returns:
+        GeoDataFrame with added travel advisory columns
+    """
+    print("\nAdding travel advisories to country data...")
+    
+    # Initialize columns
+    gdf['safety_level'] = None
+    gdf['safety_description'] = None
+    gdf['safety_summary'] = None
+    gdf['safety_url'] = None
+    gdf['safety_date'] = None
+    
+    matched_count = 0
+    for idx, row in gdf.iterrows():
+        country_name = row['name']
+        
+        # Try exact match first
+        if country_name in travel_advisories:
+            advisory = travel_advisories[country_name]
+            gdf.at[idx, 'safety_level'] = advisory['level']
+            gdf.at[idx, 'safety_description'] = advisory['description']
+            gdf.at[idx, 'safety_summary'] = advisory['summary']
+            gdf.at[idx, 'safety_url'] = advisory['url']
+            gdf.at[idx, 'safety_date'] = advisory['date']
+            matched_count += 1
+            continue
+        
+        # Try to match main country for territories (e.g., "France - French Polynesia" → "France")
+        if ' - ' in country_name:
+            main_country = country_name.split(' - ')[0]
+            if main_country in travel_advisories:
+                advisory = travel_advisories[main_country]
+                gdf.at[idx, 'safety_level'] = advisory['level']
+                gdf.at[idx, 'safety_description'] = advisory['description']
+                gdf.at[idx, 'safety_summary'] = advisory['summary']
+                gdf.at[idx, 'safety_url'] = advisory['url']
+                gdf.at[idx, 'safety_date'] = advisory['date']
+                matched_count += 1
+                continue
+        
+        # Default to Level 1 if no match found
+        gdf.at[idx, 'safety_level'] = 1
+        gdf.at[idx, 'safety_description'] = "Exercise Normal Precautions"
+        gdf.at[idx, 'safety_summary'] = "Exercise normal precautions when traveling to this country."
+        gdf.at[idx, 'safety_url'] = "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html"
+        gdf.at[idx, 'safety_date'] = None
+    
+    print(f"✓ Matched travel advisories for {matched_count}/{len(gdf)} territories")
+    
+    return gdf
 
 def _get_transformer_to_mollweide():
     """Get cached transformer to Mollweide projection."""
@@ -519,6 +604,12 @@ def aggregate_month_to_countries(month, country_gdf):
     for col in ['tmin_mean', 'tmax_mean', 'prec_mean', 'sunhours_mean', 'temp_avg', 'overall_score', 'province_count']:
         result_gdf[col] = [d[col] for d in climate_data]
     
+    # Load and add travel advisories
+    travel_advisories = load_travel_advisories()
+    if travel_advisories:
+        result_gdf = add_travel_advisories_to_gdf(result_gdf, travel_advisories)
+    
+    # 
     # Filter out territories with no climate data (no provinces matched)
     # These are typically tiny uninhabited islands that have no province-level data
     territories_before = len(result_gdf)
@@ -571,6 +662,28 @@ def create_metadata():
             "overall_score": {
                 "description": "Overall climate score (0-1, higher is better)",
                 "units": "dimensionless"
+            },
+            "safety_level": {
+                "description": "U.S. State Dept travel advisory level (1=Normal, 2=Caution, 3=Reconsider, 4=Do Not Travel)",
+                "units": "level",
+                "source": "U.S. Department of State Travel Advisories",
+                "license": "Public Domain (U.S. Government data)"
+            },
+            "safety_description": {
+                "description": "Travel advisory level description",
+                "units": "text"
+            },
+            "safety_summary": {
+                "description": "Brief summary of travel advisory",
+                "units": "text"
+            },
+            "safety_url": {
+                "description": "URL to detailed travel advisory",
+                "units": "url"
+            },
+            "safety_date": {
+                "description": "Date of travel advisory data",
+                "units": "YYYY-MM-DD"
             }
         },
         "months": list(range(1, 13)),

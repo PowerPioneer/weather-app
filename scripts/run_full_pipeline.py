@@ -1,16 +1,24 @@
 """
 Master pipeline script to run the full data processing workflow.
 
-This script executes all data processing steps in the correct order:
-1. Download ERA5 data (if needed)
-2. Process ERA5 NetCDF to GeoTIFF
-3. Aggregate province-level data
-4. Aggregate country-level data
-5. Optimize province GeoJSON files
-6. Optimize country GeoJSON files
+Prerequisites (run once before pipeline):
+- download_country_boundaries.py - Download Natural Earth country boundaries
+- download_province_boundaries.py - Download Natural Earth province boundaries
+- download_era5_data.py - Download ERA5 climate data (raw NetCDF files)
+- process_cru_sunshine.py - Process CRU sunshine data (if not already done)
+
+This script executes the main processing pipeline:
+1. Process ERA5 NetCDF to GeoTIFF
+2. Aggregate province-level data
+3. Download travel advisories (U.S. State Department)
+4. Aggregate country-level data (includes travel advisory integration)
+5. Optimize GeoTIFF files
+6. Optimize province GeoJSON files
+7. Optimize country GeoJSON files
+8. Convert to TopoJSON (optional)
 
 Usage:
-    python scripts/run_full_pipeline.py [--skip-download] [--skip-aggregation]
+    python scripts/run_full_pipeline.py [--skip-aggregation] [--skip-travel-advisories]
 """
 
 import sys
@@ -53,14 +61,14 @@ def run_script(script_name, description):
 
 def main():
     parser = argparse.ArgumentParser(description="Run the full data processing pipeline")
-    parser.add_argument("--skip-download", action="store_true", 
-                       help="Skip ERA5 data download (use existing raw files)")
     parser.add_argument("--skip-aggregation", action="store_true",
                        help="Skip aggregation steps (jump to optimization)")
     parser.add_argument("--optimization-only", action="store_true",
                        help="Only run optimization steps (requires existing aggregated data)")
     parser.add_argument("--skip-topojson", action="store_true",
                        help="Skip TopoJSON conversion (use regular GeoJSON)")
+    parser.add_argument("--skip-travel-advisories", action="store_true",
+                       help="Skip downloading travel advisories (use existing data)")
     
     args = parser.parse_args()
     
@@ -71,15 +79,7 @@ def main():
     steps_completed = []
     steps_failed = []
     
-    # Step 1: Download ERA5 data (optional)
-    if not args.skip_download and not args.skip_aggregation and not args.optimization_only:
-        if run_script("download_era5_data.py", "Download ERA5 Data"):
-            steps_completed.append("Download ERA5 Data")
-        else:
-            steps_failed.append("Download ERA5 Data")
-            print("\n⚠️  Download failed, but continuing with existing data...")
-    
-    # Step 2: Process ERA5 data
+    # Step 1: Process ERA5 data
     if not args.skip_aggregation and not args.optimization_only:
         if run_script("process_era5_data.py", "Process ERA5 NetCDF to GeoTIFF"):
             steps_completed.append("Process ERA5 Data")
@@ -88,13 +88,21 @@ def main():
             print("\n❌ Cannot continue without processed ERA5 data")
             return 1
     
-    # Step 3: Aggregate province data
+    # Step 2: Aggregate province data
     if not args.skip_aggregation and not args.optimization_only:
         if run_script("aggregate_province_data.py", "Aggregate Province-Level Data"):
             steps_completed.append("Aggregate Province Data")
         else:
             steps_failed.append("Aggregate Province Data")
             print("\n⚠️  Province aggregation failed, but continuing...")
+    
+    # Step 3: Download travel advisories (before country aggregation)
+    if not args.skip_travel_advisories and not args.optimization_only:
+        if run_script("download_travel_advisories.py", "Download Travel Advisories"):
+            steps_completed.append("Download Travel Advisories")
+        else:
+            steps_failed.append("Download Travel Advisories")
+            print("\n⚠️  Travel advisories download failed, country data will use defaults...")
     
     # Step 4: Aggregate country data
     if not args.skip_aggregation and not args.optimization_only:

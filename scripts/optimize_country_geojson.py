@@ -54,6 +54,7 @@ def optimize_month(month):
         'name', 'iso_a2', 'iso_a3',
         'tmin_mean', 'tmax_mean', 'temp_avg',
         'prec_mean', 'sunhours_mean', 'overall_score',
+        'safety_level', 'safety_description', 'safety_summary', 'safety_url', 'safety_date',
         'province_count',  # Keep for debugging/verification
         'geometry'
     ]
