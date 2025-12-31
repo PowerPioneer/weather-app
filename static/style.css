@@ -408,7 +408,8 @@ main {
 
 .mode-btn-overall {
     grid-column: 1 / 3;
-    padding: 0.3rem 0.3rem;
+    padding: 0.4rem 0.3rem;
+    flex-direction: row;
 }
 
 .mode-btn {

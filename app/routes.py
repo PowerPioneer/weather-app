@@ -106,6 +106,13 @@ def cookies():
     """Render the cookie policy page."""
     return render_template('cookies.html')
 
+@main_bp.route('/ads.txt')
+def ads_txt():
+    """Serve ads.txt file from root directory for Google AdSense verification."""
+    from flask import send_from_directory
+    static_folder = Path(__file__).parent.parent / 'static'
+    return send_from_directory(static_folder, 'ads.txt', mimetype='text/plain')
+
 @api_bp.route('/weather', methods=['GET'])
 def get_weather():
     """Get weather data for a specific location and month."""

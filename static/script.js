@@ -65,11 +65,11 @@ const colorGradients = {
     ],
     rainfall: [
         { value: 0, color: [255, 255, 255] },    // White (no rain)
-        { value: 2, color: [230, 240, 255] },    // Very pale blue
-        { value: 4, color: [200, 225, 255] },    // Pale blue
-        { value: 8, color: [150, 200, 255] },    // Light blue
-        { value: 12, color: [100, 170, 240] },   // Medium blue
-        { value: 20, color: [50, 120, 200] }     // Deep blue (very wet)
+        { value: 2, color: [200, 230, 255] },    // Very pale blue
+        { value: 4, color: [150, 210, 255] },    // Pale blue
+        { value: 8, color: [100, 180, 255] },    // Light blue
+        { value: 12, color: [50, 140, 230] },    // Medium blue
+        { value: 20, color: [20, 90, 180] }      // Deep blue (very wet)
     ],
     sunshine: [
         { value: 0, color: [200, 200, 220] },     // Pale gray (no sun)
@@ -1082,8 +1082,8 @@ function displayWeatherCharts(data, currentMonth, properties = null) {
             </div>
     `;
     
-    // Add safety advisory section if available (country-level only, Level 2+)
-    if (properties && properties.safety_level && properties.safety_level > 1 && properties.safety_description) {
+    // Add safety advisory section if available (country-level only, Level 3+)
+    if (properties && properties.safety_level && properties.safety_level > 2 && properties.safety_description) {
         const safetyLevelText = {
             1: 'Level 1: Normal Precautions',
             2: 'Level 2: Exercise Increased Caution',
@@ -1310,15 +1310,15 @@ function getColorForValue(value, gradient) {
             const r = Math.round(lower.color[0] + ratio * (upper.color[0] - lower.color[0]));
             const g = Math.round(lower.color[1] + ratio * (upper.color[1] - lower.color[1]));
             const b = Math.round(lower.color[2] + ratio * (upper.color[2] - lower.color[2]));
-            return [r, g, b, 0.6];
+            return [r, g, b, 0.75];
         }
     }
     
     // Value is outside range
     if (value < gradient[0].value) {
-        return [...gradient[0].color, 0.6];
+        return [...gradient[0].color, 0.75];
     }
-    return [...gradient[gradient.length - 1].color, 0.6];
+    return [...gradient[gradient.length - 1].color, 0.75];
 }
 
 /**
@@ -1544,28 +1544,19 @@ async function createOverallHeatmap(mapBounds, resolution, month, signal) {
 function calculateOverallScore(tempAvg, prec, sunhours, safetyLevel = null) {
     const prefs = state.preferences;
     
-    // First check safety level - if unacceptable, return red immediately
-    if (safetyLevel !== null && safetyLevel !== undefined) {
-        if (safetyLevel > prefs.maxSafety) {
-            // Safety level exceeds acceptable threshold
-            return {
-                score: 0,
-                color: [239, 68, 68, 0.7],  // Red - unsafe
-                matchCount: 0,
-                totalCriteria: 4,
-                tempMatch: null,
-                precMatch: null,
-                sunMatch: null,
-                safetyMatch: false
-            };
-        }
-    }
-    
     let matchCount = 0;
     let totalCriteria = 0;
     let tempMatch = null;
     let precMatch = null;
     let sunMatch = null;
+    let safetyMatch = true;
+    
+    // Check safety level first
+    if (safetyLevel !== null && safetyLevel !== undefined) {
+        if (safetyLevel > prefs.maxSafety) {
+            safetyMatch = false;
+        }
+    }
     
     // Temperature match (using average of tmin and tmax)
     // Note: tempAvg from data is always in Celsius, so convert if user is in Fahrenheit
@@ -1607,9 +1598,12 @@ function calculateOverallScore(tempAvg, prec, sunhours, safetyLevel = null) {
     // No data available
     if (totalCriteria === 0) return null;
     
-    // Color coding based on number of matches
+    // Color coding based on number of matches and safety
     let color;
-    if (matchCount === totalCriteria) {
+    if (!safetyMatch) {
+        // Safety level exceeds acceptable threshold - always red
+        color = [239, 68, 68, 0.7];  // Red - unsafe
+    } else if (matchCount === totalCriteria) {
         // All criteria match: Green
         color = [74, 222, 128, 0.7];  // #4ade80 - bright green
     } else if (matchCount === 2 || (matchCount === 1 && totalCriteria === 2)) {
@@ -1623,7 +1617,7 @@ function calculateOverallScore(tempAvg, prec, sunhours, safetyLevel = null) {
         color = [239, 68, 68, 0.7];  // #ef4444 - bright red
     }
     
-    const score = matchCount / totalCriteria;
+    const score = safetyMatch ? (matchCount / totalCriteria) : 0;
     return { 
         score, 
         color, 
@@ -1632,7 +1626,7 @@ function calculateOverallScore(tempAvg, prec, sunhours, safetyLevel = null) {
         tempMatch,
         precMatch,
         sunMatch,
-        safetyMatch: true  // If we got here, safety is acceptable
+        safetyMatch
     };
 }
 
@@ -1902,8 +1896,8 @@ async function createCountryOverlay() {
                 // Build popup content with travel advisory if available
                 let popupContent = `<strong>${countryName}</strong><div style="margin-top: 2px;">${valueStr}</div>`;
                 
-                // Add travel advisory information if available (only for Level 2+)
-                if (props.safety_level && props.safety_level > 1 && props.safety_description) {
+                // Add travel advisory information if available (only for Level 3+)
+                if (props.safety_level && props.safety_level > 2 && props.safety_description) {
                     const safetyLevelText = {
                         1: 'Normal Precautions',
                         2: 'Exercise Increased Caution',
@@ -2048,11 +2042,22 @@ async function createCountryOverlay() {
         
         if (state.displayMode !== 'overall') {
             state.labelLayer = L.layerGroup();
+            const currentZoom = state.map.getZoom();
             geojsonData.features.forEach(feature => {
                 const props = feature.properties;
                 const value = props[dataField];
                 
                 if (value !== null && value !== undefined) {
+                    // For safety, only show L2, L3, L4 (hide L1)
+                    if (variable === 'safety' && value === 1) {
+                        return; // Skip L1 labels
+                    }
+                    
+                    // For temp, rain, sun: only show labels when zoomed in
+                    if ((variable === 'temperature' || variable === 'rainfall' || variable === 'sunshine') && currentZoom < 4) {
+                        return; // Skip labels at low zoom
+                    }
+                    
                     let labelText;
                     if (variable === 'temperature') {
                         const displayValue = state.temperatureUnit === 'F' 
@@ -2411,11 +2416,22 @@ async function createProvinceOverlay() {
         
         if (state.displayMode !== 'overall') {
             state.labelLayer = L.layerGroup();
+            const currentZoom = state.map.getZoom();
             geojsonData.features.forEach(feature => {
                 const props = feature.properties;
                 const value = props[dataField];
                 
                 if (value !== null && value !== undefined) {
+                    // For safety, only show L2, L3, L4 (hide L1)
+                    if (variable === 'safety' && value === 1) {
+                        return; // Skip L1 labels
+                    }
+                    
+                    // For temp, rain, sun: only show labels when zoomed in
+                    if ((variable === 'temperature' || variable === 'rainfall' || variable === 'sunshine') && currentZoom < 4) {
+                        return; // Skip labels at low zoom
+                    }
+                    
                     let labelText;
                     if (variable === 'temperature') {
                         const displayValue = state.temperatureUnit === 'F' 
