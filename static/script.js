@@ -1841,6 +1841,7 @@ async function createCountryOverlay() {
         }
         
         // Create new GeoJSON layer
+        console.log('[TRACE-1] Creating L.geoJSON layer, about to call L.geoJSON()');
         state.heatmapLayer = L.geoJSON(geojsonData, {
             style: styleFunction,
             onEachFeature: (feature, layer) => {
@@ -2034,22 +2035,28 @@ async function createCountryOverlay() {
             }
         }).addTo(state.map);
         
+        console.log('[DEBUG] After GeoJSON.addTo - about to create labels');
+        
         // Add labels for non-overall modes
+        console.log(`[Countries] Creating labels - displayMode=${state.displayMode}, variable=${variable}`);
         if (state.labelLayer) {
             state.map.removeLayer(state.labelLayer);
             state.labelLayer = null;
         }
         
         if (state.displayMode !== 'overall') {
+            console.log('[Countries] Inside label creation block');
             state.labelLayer = L.layerGroup();
             const currentZoom = state.map.getZoom();
-            geojsonData.features.forEach(feature => {
+            console.log(`[Countries] Processing ${geojsonData.features.length} features`);
+            geojsonData.features.forEach((feature, index) => {
                 const props = feature.properties;
                 const value = props[dataField];
                 
                 if (value !== null && value !== undefined) {
                     // For safety, only show L2, L3, L4 (hide L1)
-                    if (variable === 'safety' && value === 1) {
+                    if (variable === 'safety' && (value === 1 || value === '1')) {
+                        console.log(`Countries - Skipping L1 for ${props.name}: value=${value}, type=${typeof value}`);
                         return; // Skip L1 labels
                     }
                     
@@ -2409,21 +2416,25 @@ async function createProvinceOverlay() {
         state.heatmapLayer.addTo(state.map);
         
         // Add labels for non-overall modes
+        console.log(`[Provinces] Creating labels - displayMode=${state.displayMode}, variable=${variable}`);
         if (state.labelLayer) {
             state.map.removeLayer(state.labelLayer);
             state.labelLayer = null;
         }
         
         if (state.displayMode !== 'overall') {
+            console.log('[Provinces] Inside label creation block');
             state.labelLayer = L.layerGroup();
             const currentZoom = state.map.getZoom();
-            geojsonData.features.forEach(feature => {
+            console.log(`[Provinces] Processing ${geojsonData.features.length} features`);
+            geojsonData.features.forEach((feature, index) => {
                 const props = feature.properties;
                 const value = props[dataField];
                 
                 if (value !== null && value !== undefined) {
                     // For safety, only show L2, L3, L4 (hide L1)
-                    if (variable === 'safety' && value === 1) {
+                    if (variable === 'safety' && (value === 1 || value === '1')) {
+                        console.log(`Provinces - Skipping L1 for ${props.name}: value=${value}, type=${typeof value}`);
                         return; // Skip L1 labels
                     }
                     
