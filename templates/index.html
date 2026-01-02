@@ -3,10 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Plan your vacation based on historical weather data. Interactive world map showing temperature, rainfall, and sunshine hours by month.">
     <title>Where to Go for Great Weather</title>
     
+    <!-- Preconnect to external domains for faster resource loading -->
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://app.enzuzo.com">
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+    <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com">
+    
     <!-- Enzuzo Cookie Consent Banner -->
-    <script src="https://app.enzuzo.com/scripts/cookiebar/5699ddde-e00d-11f0-97bb-6f1d64467c75"></script>
+    <script defer src="https://app.enzuzo.com/scripts/cookiebar/5699ddde-e00d-11f0-97bb-6f1d64467c75"></script>
     
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-5N6CMNKFPE"></script>
@@ -21,8 +29,9 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2423510297813794"
          crossorigin="anonymous"></script>
     
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet CSS - load asynchronously to avoid render blocking -->
+    <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251227" type="text/css">
 </head>
 <body>
@@ -68,7 +77,7 @@
 
         <main>
             <div class="map-container-fullscreen">
-                <div id="map" class="map"></div>
+                <div id="map" class="map" style="min-height: 600px;"></div>
                 
                 <!-- Transparent overlay for preferences panel backdrop -->
                 <div class="preferences-overlay" id="preferencesOverlay"></div>
@@ -264,6 +273,25 @@
             </section>
         </main>
     </div>
+
+    <!-- Cookie banner placeholder to reduce Cumulative Layout Shift (CLS) -->
+    <div id="cookie-banner-placeholder" style="height: 0; transition: height 0.3s ease;"></div>
+    <script>
+        // Reserve space for Enzuzo cookie banner when it appears
+        window.addEventListener('load', function() {
+            // Check if Enzuzo banner exists and adjust placeholder
+            setTimeout(function() {
+                var enzuzoBanner = document.querySelector('[data-enzuzo-cookie-bar]') || 
+                                 document.querySelector('.enzuzo-cookie-bar') ||
+                                 document.getElementById('enzuzo-cookie-bar');
+                if (enzuzoBanner) {
+                    // Banner is showing, remove placeholder
+                    var placeholder = document.getElementById('cookie-banner-placeholder');
+                    if (placeholder) placeholder.style.display = 'none';
+                }
+            }, 100);
+        });
+    </script>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

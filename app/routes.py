@@ -82,29 +82,44 @@ def index():
     import json
     initial_data_json = json.dumps(initial_country_data) if initial_country_data else 'null'
     
-    return render_template('index.html', 
+    response = make_response(render_template('index.html', 
                          current_month=current_month,
-                         initial_country_data=initial_data_json)
+                         initial_country_data=initial_data_json))
+    # Cache for 1 hour (dynamic content with current month)
+    response.headers['Cache-Control'] = 'public, max-age=3600'
+    return response
 
 @main_bp.route('/about')
 def about():
     """Render the about page."""
-    return render_template('about.html')
+    response = make_response(render_template('about.html'))
+    # Cache for 1 day (static content)
+    response.headers['Cache-Control'] = 'public, max-age=86400'
+    return response
 
 @main_bp.route('/privacy')
 def privacy():
     """Render the privacy policy page."""
-    return render_template('privacy.html')
+    response = make_response(render_template('privacy.html'))
+    # Cache for 1 day (static content)
+    response.headers['Cache-Control'] = 'public, max-age=86400'
+    return response
 
 @main_bp.route('/terms')
 def terms():
     """Render the terms of service page."""
-    return render_template('terms.html')
+    response = make_response(render_template('terms.html'))
+    # Cache for 1 day (static content)
+    response.headers['Cache-Control'] = 'public, max-age=86400'
+    return response
 
 @main_bp.route('/cookies')
 def cookies():
     """Render the cookie policy page."""
-    return render_template('cookies.html')
+    response = make_response(render_template('cookies.html'))
+    # Cache for 1 day (static content)
+    response.headers['Cache-Control'] = 'public, max-age=86400'
+    return response
 
 @main_bp.route('/ads.txt')
 def ads_txt():

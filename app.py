@@ -12,4 +12,6 @@ if __name__ == '__main__':
     
     app = create_app()
     # Debug mode is set in app.config by create_app() based on environment
-    app.run(debug=app.config['DEBUG'], host='0.0.0.0', port=5000)
+    # Try port 8080 to avoid Windows Firewall issues with port 5000
+    print("Starting server on http://127.0.0.1:8080")
+    app.run(debug=app.config['DEBUG'], host='127.0.0.1', port=8080)
