@@ -13,6 +13,23 @@
     <link rel="dns-prefetch" href="https://www.googletagmanager.com">
     <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com">
     
+    <!-- Critical CSS - inline for immediate rendering -->
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        html,body{height:100%;width:100%;margin:0;padding:0;overflow:hidden;position:fixed;background-color:#aadaff}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#2c3e3b}
+        #app{height:100%;width:100%;display:flex;flex-direction:column;position:relative}
+        header{background:linear-gradient(135deg,#2d4f4c 0%,#3a615c 100%);color:#fff;padding:1.25rem 2rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);position:fixed;top:0;left:0;right:0;z-index:1001;width:100%}
+        .header-content{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;max-width:100%;gap:2rem}
+        .header-left{display:flex;align-items:center;gap:0.75rem;justify-self:start}
+        .header-center{display:flex;flex-direction:column;gap:0.25rem;align-items:center;justify-self:center}
+        header h1{font-size:1.75rem;margin:0}
+        header p{font-size:0.95rem;opacity:0.9;margin:0}
+        main{padding:0;position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;overflow:hidden;padding-top:100px}
+        .map-container-fullscreen{position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:1}
+        .map{width:100%;height:100%;min-height:600px;position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background-color:#aadaff}
+    </style>
+    
     <!-- Enzuzo Cookie Consent Banner -->
     <script defer src="https://app.enzuzo.com/scripts/cookiebar/5699ddde-e00d-11f0-97bb-6f1d64467c75"></script>
     
@@ -32,7 +49,10 @@
     <!-- Leaflet CSS - load asynchronously to avoid render blocking -->
     <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251227" type="text/css">
+    
+    <!-- Main CSS - load asynchronously after critical CSS -->
+    <link rel="preload" href="{{ url_for('static', filename='style.css') }}?v=20251227" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251227"></noscript>
 </head>
 <body>
     <div id="app">
@@ -293,10 +313,25 @@
         });
     </script>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <!-- Leaflet JS - defer to avoid render blocking -->
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Chart.js - lazy load only when needed (when user clicks a location) -->
+    <script>
+        window.loadChartJS = function() {
+            return new Promise((resolve, reject) => {
+                if (window.Chart) {
+                    resolve(window.Chart);
+                    return;
+                }
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js';
+                script.onload = () => resolve(window.Chart);
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        };
+    </script>
     
     <!-- Preloaded country data for faster initial load -->
     <script>
@@ -307,6 +342,6 @@
         };
     </script>
     
-    <script src="{{ url_for('static', filename='script.js') }}?v=20251231-001"></script>
+    <script defer src="{{ url_for('static', filename='script.js') }}?v=20251231-002"></script>
 </body>
 </html>

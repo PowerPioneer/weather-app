@@ -1029,7 +1029,17 @@ let weatherCharts = {
 /**
  * Display weather information as charts
  */
-function displayWeatherCharts(data, currentMonth, properties = null) {
+async function displayWeatherCharts(data, currentMonth, properties = null) {
+    // Load Chart.js if not already loaded
+    if (!window.Chart && window.loadChartJS) {
+        try {
+            await window.loadChartJS();
+        } catch (error) {
+            console.error('Failed to load Chart.js:', error);
+            return;
+        }
+    }
+    
     // Update both overlay and section weather info containers
     const weatherInfoContainers = document.querySelectorAll('.weather-info');
     
