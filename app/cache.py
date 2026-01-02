@@ -229,7 +229,9 @@ def warm_cache_with_geojson(data_path, data_type='country'):
         print("Cache not initialized")
         return 0
     
-    aggregated_dir = Path(data_path) / data_type.lower() + 's' / 'aggregated'
+    # Determine directory name with proper pluralization
+    dir_name = 'countries' if data_type.lower() == 'country' else 'provinces'
+    aggregated_dir = Path(data_path) / dir_name / 'optimized'
     
     if not aggregated_dir.exists():
         print(f"Directory not found: {aggregated_dir}")
