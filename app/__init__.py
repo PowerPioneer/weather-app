@@ -2,18 +2,28 @@ import os
 from flask import Flask, request
 from flask_cors import CORS
 from flask_compress import Compress
-from app.config import get_flask_secret_key
+from app.config import get_flask_secret_key, get_environment, get_debug_mode
 
 def create_app():
     """Create and configure the Flask application."""
     # Get the parent directory (project root)
     basedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
+    # Detect environment
+    environment = get_environment()
+    debug_mode = get_debug_mode()
+    
+    print(f"Starting Flask app in {environment.upper()} mode (debug={debug_mode})")
+    
     # Create Flask app with explicit paths
     app = Flask(__name__,
                 template_folder=os.path.join(basedir, 'templates'),
                 static_folder=os.path.join(basedir, 'static'),
                 static_url_path='/static')
+    
+    # Set environment and debug mode
+    app.config['ENV'] = environment
+    app.config['DEBUG'] = debug_mode
     
     # Load secret key from configuration
     try:
@@ -36,8 +46,13 @@ def create_app():
     app.config['COMPRESS_LEVEL'] = 6  # Balance between speed and compression (1-9)
     app.config['COMPRESS_MIN_SIZE'] = 500  # Only compress responses > 500 bytes
     
-    # Configure static file caching and MIME types
-    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # No cache during development
+    # Configure static file caching based on environment
+    if environment == 'production':
+        # Production: Cache static files for 1 year
+        app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
+    else:
+        # Development: No caching for easy testing
+        app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
     
     # Add response headers for proper static file serving
     @app.after_request
@@ -45,19 +60,33 @@ def create_app():
         # Use request.path instead of response.path
         if request.path.endswith('.css'):
             response.headers['Content-Type'] = 'text/css; charset=utf-8'
-            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-            response.headers['Pragma'] = 'no-cache'
-            response.headers['Expires'] = '0'
+            if environment == 'development':
+                # Development: Disable caching for CSS
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = '0'
+            else:
+                # Production: Cache CSS for 1 week
+                response.headers['Cache-Control'] = 'public, max-age=604800'
         elif request.path.endswith('.js'):
             response.headers['Content-Type'] = 'application/javascript; charset=utf-8'
-            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-            response.headers['Pragma'] = 'no-cache'
-            response.headers['Expires'] = '0'
+            if environment == 'development':
+                # Development: Disable caching for JS
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = '0'
+            else:
+                # Production: Cache JS for 1 week
+                response.headers['Cache-Control'] = 'public, max-age=604800'
         return response
     
     # Enable CORS and Compression
     CORS(app)
     Compress(app)
+    
+    # Initialize Redis cache
+    from app.cache import init_cache
+    init_cache(app)
     
     # Register blueprints
     from app.routes import main_bp, api_bp

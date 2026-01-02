@@ -6,6 +6,7 @@ import rasterio
 from pathlib import Path
 import json
 import numpy as np
+from app.cache import get_cached_weather_point
 
 # Path to climate data (optimized monthly averages)
 OPTIMIZED_DIR = Path(__file__).parent.parent / "data" / "optimized"
@@ -140,9 +141,14 @@ def get_grid_data(variable, month, bounds, resolution=50):
         print(f"Error reading grid data from {tif_file}: {e}")
         return None
 
-def get_weather_for_location(lat, lng, month):
+def _load_weather_from_geotiff(lat, lng, month):
     """
-    Get weather data for a specific location and month.
+    Load weather data directly from GeoTIFF files (internal function).
+    
+    Args:
+        lat: Latitude
+        lng: Longitude  
+        month: Month number (1-12)
     
     Returns:
         Dictionary with tmin, tmax, prec, and sunhours values
@@ -153,3 +159,22 @@ def get_weather_for_location(lat, lng, month):
         'prec': get_value_at_coordinate(lat, lng, 'prec', month),
         'sunhours': get_value_at_coordinate(lat, lng, 'sunhours', month)
     }
+
+def get_weather_for_location(lat, lng, month):
+    """
+    Get weather data for a specific location and month.
+    Uses Redis cache if available, falls back to GeoTIFF reading.
+    
+    Args:
+        lat: Latitude
+        lng: Longitude
+        month: Month number (1-12)
+    
+    Returns:
+        Dictionary with tmin, tmax, prec, and sunhours values
+    """
+    # Use Redis cache with fallback to GeoTIFF reading
+    return get_cached_weather_point(
+        lat, lng, month,
+        lambda: _load_weather_from_geotiff(lat, lng, month)
+    )

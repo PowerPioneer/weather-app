@@ -5,24 +5,25 @@ This provides pre-computed province averages as an alternative to grid-based dat
 import json
 from pathlib import Path
 import geopandas as gpd
+from app.cache import get_cached_geojson, geojson_province_key
 
 # Path to province data (optimized for web serving)
 PROVINCES_DIR = Path(__file__).parent.parent / "data" / "provinces" / "optimized"
 
-# Cache for loaded province data
+# Fallback in-memory cache for when Redis is not available
 _province_cache = {}
 
-def get_province_data(month):
+def _load_province_from_disk(month):
     """
-    Load province-level climate data for a specific month.
+    Load province data from disk (internal function).
     
     Args:
         month: Month number (1-12)
     
     Returns:
-        GeoJSON dict with province polygons and climate data, or None if not found
+        GeoJSON dict or None
     """
-    # Check cache first
+    # Check in-memory fallback cache first
     cache_key = f"month_{month:02d}"
     if cache_key in _province_cache:
         return _province_cache[cache_key]
@@ -38,13 +39,28 @@ def get_province_data(month):
         with open(geojson_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        # Cache it
+        # Cache it in memory as fallback
         _province_cache[cache_key] = data
         
         return data
     except Exception as e:
         print(f"Error loading province data for month {month}: {e}")
         return None
+
+def get_province_data(month):
+    """
+    Load province-level climate data for a specific month.
+    Uses Redis cache if available, falls back to in-memory cache.
+    
+    Args:
+        month: Month number (1-12)
+    
+    Returns:
+        GeoJSON dict with province polygons and climate data, or None if not found
+    """
+    # Use Redis cache with fallback to disk loading
+    cache_key = geojson_province_key(month)
+    return get_cached_geojson(cache_key, lambda: _load_province_from_disk(month))
 
 def filter_by_bounds(geojson_data, north, south, east, west):
     """

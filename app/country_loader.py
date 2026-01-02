@@ -4,24 +4,25 @@ This provides pre-computed country averages for zoomed-out map views.
 """
 import json
 from pathlib import Path
+from app.cache import get_cached_geojson, geojson_country_key
 
 # Path to country data (optimized for web serving)
 COUNTRIES_DIR = Path(__file__).parent.parent / "data" / "countries" / "optimized"
 
-# Cache for loaded country data
+# Fallback in-memory cache for when Redis is not available
 _country_cache = {}
 
-def get_country_data(month):
+def _load_country_from_disk(month):
     """
-    Load country-level climate data for a specific month.
+    Load country data from disk (internal function).
     
     Args:
         month: Month number (1-12)
     
     Returns:
-        GeoJSON dict with country polygons and climate data, or None if not found
+        GeoJSON dict or None
     """
-    # Check cache first
+    # Check in-memory fallback cache first
     cache_key = f"month_{month:02d}"
     if cache_key in _country_cache:
         return _country_cache[cache_key]
@@ -37,13 +38,28 @@ def get_country_data(month):
         with open(geojson_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        # Cache it
+        # Cache it in memory as fallback
         _country_cache[cache_key] = data
         
         return data
     except Exception as e:
         print(f"Error loading country data for month {month}: {e}")
         return None
+
+def get_country_data(month):
+    """
+    Load country-level climate data for a specific month.
+    Uses Redis cache if available, falls back to in-memory cache.
+    
+    Args:
+        month: Month number (1-12)
+    
+    Returns:
+        GeoJSON dict with country polygons and climate data, or None if not found
+    """
+    # Use Redis cache with fallback to disk loading
+    cache_key = geojson_country_key(month)
+    return get_cached_geojson(cache_key, lambda: _load_country_from_disk(month))
 
 def filter_by_bounds(geojson_data, north, south, east, west):
     """

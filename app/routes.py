@@ -586,6 +586,42 @@ def get_combined_data():
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @api_bp.route('/cache/stats', methods=['GET'])
-def get_cache_stats():
+def get_cache_stats_route():
     """Get cache statistics for performance monitoring."""
-    from app.data_loader import get_value_at_coordinate
+    from app.cache import get_cache_stats
+    
+    try:
+        stats = get_cache_stats()
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
+@api_bp.route('/cache/clear', methods=['POST'])
+def clear_cache_route():
+    """Clear cache entries (admin endpoint - consider adding authentication)."""
+    from app.cache import clear_cache
+    
+    pattern = request.args.get('pattern')  # Optional pattern like 'geojson:*'
+    
+    try:
+        deleted = clear_cache(pattern)
+        if deleted >= 0:
+            return jsonify({
+                'status': 'success',
+                'deleted': deleted,
+                'pattern': pattern or 'all'
+            })
+        else:
+            return jsonify({
+                'status': 'success',
+                'message': 'Cache cleared',
+                'pattern': pattern or 'all'
+            })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500

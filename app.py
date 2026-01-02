@@ -11,4 +11,5 @@ if __name__ == '__main__':
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     
     app = create_app()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Debug mode is set in app.config by create_app() based on environment
+    app.run(debug=app.config['DEBUG'], host='0.0.0.0', port=5000)
