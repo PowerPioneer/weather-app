@@ -19,9 +19,218 @@ ERA5_DIR = DATA_DIR / "era5"
 CRU_DIR = DATA_DIR / "cru"
 PROVINCES_DIR = DATA_DIR / "provinces"
 OUTPUT_DIR = DATA_DIR / "provinces" / "aggregated"
+TRAVEL_ADVISORIES_FILE = DATA_DIR / "travel_advisories.json"
 
 # Load province boundaries
 PROVINCES_SHAPEFILE = PROVINCES_DIR / "ne_10m_admin_1_states_provinces.shp"
+
+# Name mapping from Natural Earth province admin names to travel advisory country names
+COUNTRY_NAME_MAPPING = {
+    # Main countries
+    'Democratic Republic of the Congo': 'Dem. Rep. Congo',
+    'Republic of the Congo': 'Congo',
+    'United Republic of Tanzania': 'Tanzania',
+    'Czech Republic': 'Czechia',
+    'The former Yugoslav Republic of Macedonia': 'North Macedonia',
+    'Macedonia': 'North Macedonia',
+    'Republic of Serbia': 'Serbia',
+    'Central African Republic': 'Central African Rep.',
+    'Ivory Coast': "Côte d'Ivoire",
+    "Côte d'Ivoire": "Côte d'Ivoire",
+    'Dominican Republic': 'Dominican Rep.',
+    'East Timor': 'Timor-Leste',
+    'Swaziland': 'eSwatini',
+    'Bosnia and Herzegovina': 'Bosnia and Herz.',
+    'Guinea Bissau': 'Guinea-Bissau',
+    'Equatorial Guinea': 'Eq. Guinea',
+    'The Bahamas': 'Bahamas',
+    'Republic of Korea': 'South Korea',
+    "Democratic People's Republic of Korea": 'North Korea',
+    'Lao PDR': 'Laos',
+    'Solomon Islands': 'Solomon Is.',
+    'Republic of Moldova': 'Moldova',
+    'Falkland Islands': 'Falkland Is.',
+    
+    # Caribbean islands
+    'Antigua and Barbuda': 'Antigua and Barb.',
+    'Saint Kitts and Nevis': 'St. Kitts and Nevis',
+    'Saint Vincent and the Grenadines': 'St. Vin. and Gren.',
+    'Turks and Caicos Islands': 'Turks and Caicos Is.',
+    'Cayman Islands': 'Cayman Is.',
+    'British Virgin Islands': 'British Virgin Is.',
+    'United States Virgin Islands': 'U.S. Virgin Is.',
+    'U.S. Virgin Islands': 'U.S. Virgin Is.',
+    'Saint Barthelemy': 'St-Barthélemy',
+    'Saint Martin': 'St-Martin',
+    
+    # Pacific islands
+    'Cook Islands': 'Cook Is.',
+    'Northern Mariana Islands': 'N. Mariana Is.',
+    'Federated States of Micronesia': 'Micronesia',
+    'Pitcairn Islands': 'Pitcairn Is.',
+    'Wallis and Futuna': 'Wallis and Futuna Is.',
+    'Marshall Islands': 'Marshall Is.',
+    'French Polynesia': 'Fr. Polynesia',
+    
+    # Atlantic islands
+    'Cape Verde': 'Cabo Verde',
+    'Sao Tome and Principe': 'São Tomé and Principe',
+    'Saint Pierre and Miquelon': 'St. Pierre and Miquelon',
+    'Faroe Islands': 'Faeroe Is.',
+    
+    # Special territories
+    'Hong Kong S.A.R.': 'Hong Kong',
+    'Macao S.A.R': 'Macao',
+    'Aland': 'Åland',
+    'West Bank': 'Palestine',
+    'Gaza': 'Palestine',
+    'Western Sahara': 'W. Sahara',
+    'Northern Cyprus': 'N. Cyprus',
+    'Somaliland': 'Somaliland',
+    'Indian Ocean Territories': 'Indian Ocean Ter.',
+    'Siachen Glacier': 'Siachen Glacier',
+    'Akrotiri Sovereign Base Area': 'Akrotiri',
+    'Dhekelia Sovereign Base Area': 'Dhekelia',
+    'Baykonur Cosmodrome': 'Baikonur',
+}
+
+def load_travel_advisories():
+    """
+    Load travel advisories from JSON file.
+    
+    Returns:
+        dict: Travel advisory data by country name, or None if file doesn't exist
+    """
+    if not TRAVEL_ADVISORIES_FILE.exists():
+        print(f"\nℹ️  Travel advisories file not found: {TRAVEL_ADVISORIES_FILE}")
+        print("   Run 'python scripts/download_travel_advisories.py' to download advisories.")
+        return None
+    
+    try:
+        with open(TRAVEL_ADVISORIES_FILE, 'r', encoding='utf-8') as f:
+            advisories = json.load(f)
+        print(f"✓ Loaded travel advisories for {len(advisories)} countries")
+        return advisories
+    except Exception as e:
+        print(f"⚠️  Error loading travel advisories: {e}")
+        return None
+
+
+def add_travel_advisories_to_provinces(gdf, travel_advisories):
+    """
+    Add travel advisory data to province GeoDataFrame based on parent country.
+    
+    Args:
+        gdf: GeoDataFrame with province data (must have 'admin' column with parent country name)
+        travel_advisories: Dict of travel advisory data by country name
+    
+    Returns:
+        GeoDataFrame with added travel advisory columns
+    """
+    if travel_advisories is None:
+        print("\nℹ️  No travel advisories to add - skipping")
+        return gdf
+    
+    print("\nAdding travel advisories to province data...")
+    
+    # Initialize columns
+    gdf['safety_level'] = None
+    gdf['safety_description'] = None
+    gdf['safety_summary'] = None
+    gdf['safety_url'] = None
+    gdf['safety_date'] = None
+    
+    matched_count = 0
+    unmatched_countries = set()
+    
+    for idx, row in gdf.iterrows():
+        parent_country = row.get('admin', '')
+        
+        if not parent_country:
+            # Default to Level 1 if no parent country
+            gdf.at[idx, 'safety_level'] = 1
+            gdf.at[idx, 'safety_description'] = "Exercise Normal Precautions"
+            gdf.at[idx, 'safety_summary'] = "Exercise normal precautions when traveling to this location."
+            gdf.at[idx, 'safety_url'] = "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html"
+            gdf.at[idx, 'safety_date'] = None
+            continue
+        
+        # Try exact match first
+        if parent_country in travel_advisories:
+            advisory = travel_advisories[parent_country]
+            gdf.at[idx, 'safety_level'] = advisory['level']
+            gdf.at[idx, 'safety_description'] = advisory['description']
+            gdf.at[idx, 'safety_summary'] = advisory['summary']
+            gdf.at[idx, 'safety_url'] = advisory['url']
+            gdf.at[idx, 'safety_date'] = advisory['date']
+            matched_count += 1
+            continue
+        
+        # Try name mapping
+        if parent_country in COUNTRY_NAME_MAPPING:
+            mapped_name = COUNTRY_NAME_MAPPING[parent_country]
+            if mapped_name in travel_advisories:
+                advisory = travel_advisories[mapped_name]
+                gdf.at[idx, 'safety_level'] = advisory['level']
+                gdf.at[idx, 'safety_description'] = advisory['description']
+                gdf.at[idx, 'safety_summary'] = advisory['summary']
+                gdf.at[idx, 'safety_url'] = advisory['url']
+                gdf.at[idx, 'safety_date'] = advisory['date']
+                matched_count += 1
+                continue
+        
+        # Try reverse mapping (mapped value as key)
+        reverse_mapping = {v: k for k, v in COUNTRY_NAME_MAPPING.items()}
+        if parent_country in reverse_mapping:
+            original_name = reverse_mapping[parent_country]
+            if original_name in travel_advisories:
+                advisory = travel_advisories[original_name]
+                gdf.at[idx, 'safety_level'] = advisory['level']
+                gdf.at[idx, 'safety_description'] = advisory['description']
+                gdf.at[idx, 'safety_summary'] = advisory['summary']
+                gdf.at[idx, 'safety_url'] = advisory['url']
+                gdf.at[idx, 'safety_date'] = advisory['date']
+                matched_count += 1
+                continue
+        
+        # Check for common variations
+        variations = [
+            parent_country.replace(' and ', ' & '),
+            parent_country.replace(' & ', ' and '),
+            parent_country.replace('United States', 'United States of America'),
+            parent_country.replace('United States of America', 'United States'),
+        ]
+        
+        found = False
+        for variation in variations:
+            if variation in travel_advisories:
+                advisory = travel_advisories[variation]
+                gdf.at[idx, 'safety_level'] = advisory['level']
+                gdf.at[idx, 'safety_description'] = advisory['description']
+                gdf.at[idx, 'safety_summary'] = advisory['summary']
+                gdf.at[idx, 'safety_url'] = advisory['url']
+                gdf.at[idx, 'safety_date'] = advisory['date']
+                matched_count += 1
+                found = True
+                break
+        
+        if found:
+            continue
+        
+        # Default to Level 1 if no match found
+        gdf.at[idx, 'safety_level'] = 1
+        gdf.at[idx, 'safety_description'] = "Exercise Normal Precautions"
+        gdf.at[idx, 'safety_summary'] = f"Exercise normal precautions when traveling to {parent_country}."
+        gdf.at[idx, 'safety_url'] = "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html"
+        gdf.at[idx, 'safety_date'] = None
+        unmatched_countries.add(parent_country)
+    
+    print(f"✓ Matched travel advisories for {matched_count}/{len(gdf)} provinces")
+    if unmatched_countries:
+        print(f"ℹ️  Unmatched parent countries ({len(unmatched_countries)}): {sorted(list(unmatched_countries))[:10]}...")
+    
+    return gdf
+
 
 def load_provinces():
     """Load province boundaries from shapefile."""
@@ -140,7 +349,7 @@ def create_province_dataset_for_month(month, provinces_gdf):
     
     Args:
         month: Month number (1-12)
-        provinces_gdf: Base GeoDataFrame with province boundaries
+        provinces_gdf: Base GeoDataFrame with province boundaries (including travel advisories)
     
     Returns:
         GeoDataFrame with all climate variables aggregated
@@ -274,6 +483,10 @@ def main():
     # Load province boundaries
     provinces = load_provinces()
     
+    # Load and add travel advisories
+    travel_advisories = load_travel_advisories()
+    provinces = add_travel_advisories_to_provinces(provinces, travel_advisories)
+    
     # Process all 12 months
     all_month_stats = []
     
@@ -295,10 +508,11 @@ def main():
     # Save overall metadata
     metadata = {
         'generated': datetime.now().isoformat(),
-        'description': 'Province-level aggregated climate data',
+        'description': 'Province-level aggregated climate data with travel advisories',
         'source_data': {
             'ERA5': 'Temperature (tmin, tmax) and Precipitation',
-            'CRU': 'Sunshine hours'
+            'CRU': 'Sunshine hours',
+            'Travel Advisories': 'U.S. State Department travel advisories (by parent country)'
         },
         'total_provinces': len(provinces),
         'months_processed': len(all_month_stats),
@@ -308,7 +522,12 @@ def main():
             'temp_avg': 'Average temperature (°C)',
             'prec_mean': 'Average precipitation (mm/day)',
             'sunhours_mean': 'Average sunshine hours (hours/day)',
-            'overall_score': 'Composite weather score (0-1, higher is better)'
+            'overall_score': 'Composite weather score (0-1, higher is better)',
+            'safety_level': 'Travel advisory level (1-4)',
+            'safety_description': 'Travel advisory description',
+            'safety_summary': 'Travel advisory summary',
+            'safety_url': 'Travel advisory URL',
+            'safety_date': 'Travel advisory date'
         },
         'month_stats': all_month_stats
     }

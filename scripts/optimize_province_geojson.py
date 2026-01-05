@@ -53,6 +53,7 @@ def optimize_month(month):
         'name', 'admin', 'iso_a2',
         'tmin_mean', 'tmax_mean', 'temp_avg',
         'prec_mean', 'sunhours_mean', 'overall_score',
+        'safety_level', 'safety_description', 'safety_summary', 'safety_url', 'safety_date',
         'geometry'
     ]
     gdf = gdf[[col for col in essential_cols if col in gdf.columns]]

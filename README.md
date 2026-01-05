@@ -11,7 +11,9 @@ Een interactieve webapp waarmee je je vakantie kan plannen op basis van weersoms
   - Temperature: Min/max temperatuur in °C
   - Rainfall: Maandelijkse neerslag in mm
   - Sunshine: Zonuren per dag
+  - Safety: Reisadviezen van het U.S. State Department (Level 1-4)
 - **Climate Preferences**: Stel je ideale weerscondities in
+- **Safety Level Filter**: Filter bestemmingen op basis van aanvaardbaar veiligheidsniveau
 - **Location details**: Klik op de kaart voor specifieke weersgegevens en locatie-informatie
 
 ## Data Bronnen
@@ -41,6 +43,14 @@ Provincie/staat grenzen voor toekomstige features
 - **Licentie:** Public Domain
 - **Website:** https://www.naturalearthdata.com/
 - **Citatie:** Natural Earth. Free vector and raster map data @ naturalearthdata.com.
+
+### U.S. State Department Travel Advisories
+Reisadviezen voor veiligheid per land
+- **Niveaus:** Level 1 (Normal Precautions) tot Level 4 (Do Not Travel)
+- **Licentie:** Public Domain (U.S. Government data)
+- **Website:** https://travel.state.gov/
+- **Gebruik:** Geïntegreerd in de kaart als aparte "Safety" layer en als filter in Climate Preferences
+- **Opmerking:** Landen zonder specifiek advies krijgen standaard Level 1 (Normal Precautions)
 
 ## Projectstructuur
 
