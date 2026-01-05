@@ -5,21 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About - Where to Go for Great Weather</title>
     
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-P5SWCPR7');</script>
+    <!-- End Google Tag Manager -->
+    
     <!-- Enzuzo Cookie Consent Banner -->
     <script src="https://app.enzuzo.com/scripts/cookiebar/5699ddde-e00d-11f0-97bb-6f1d64467c75"></script>
-    
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-5N6CMNKFPE"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-5N6CMNKFPE');
-    </script>
-    
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2423510297813794"
-         crossorigin="anonymous"></script>
     
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251218">
     <style>
@@ -108,6 +103,10 @@
     </style>
 </head>
 <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P5SWCPR7"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <div id="app">
         <header>
             <div class="header-content">
@@ -203,22 +202,60 @@
                     </p>
                 </div>
 
+                <div class="data-source">
+                    <h3>U.S. State Department Travel Advisories</h3>
+                    <p>
+                        Travel safety information is provided by the <strong>U.S. Department of State</strong> Bureau of Consular Affairs, which issues travel advisories to help U.S. citizens make informed decisions about international travel.
+                    </p>
+                    <p><strong>Advisory Levels:</strong></p>
+                    <ul>
+                        <li><strong>Level 1:</strong> Exercise Normal Precautions</li>
+                        <li><strong>Level 2:</strong> Exercise Increased Caution</li>
+                        <li><strong>Level 3:</strong> Reconsider Travel</li>
+                        <li><strong>Level 4:</strong> Do Not Travel</li>
+                    </ul>
+                    <p><strong>License:</strong> Public Domain (U.S. Government data)</p>
+                    <p>
+                        <strong>Website:</strong> <a href="https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html" target="_blank">https://travel.state.gov/</a>
+                    </p>
+                    <p>
+                        The application displays travel advisories on the map as a separate "Safety" layer and integrates them into the overall destination scoring. Countries without specific advisories default to Level 1 (Normal Precautions). Travel advisories Level 3 and above are also shown in location detail popups to alert users of potential risks.
+                    </p>
+                </div>
+
                 <h2>Features</h2>
                 <ul>
                     <li><strong>Interactive World Map:</strong> Explore weather conditions across the globe</li>
                     <li><strong>Monthly Data:</strong> View climate data for any month of the year</li>
-                    <li><strong>Multiple Variables:</strong> Switch between temperature, precipitation, and sunshine hours</li>
+                    <li><strong>Multiple Variables:</strong> Switch between temperature, precipitation, sunshine hours, and safety levels</li>
+                    <li><strong>Travel Safety Information:</strong> View U.S. State Department travel advisories (Level 1-4) integrated into the map</li>
+                    <li><strong>Safety Level Filter:</strong> Set your acceptable safety level in Climate Preferences to filter destinations</li>
                     <li><strong>Visual Color Schemes:</strong> Intuitive color gradients for easy interpretation</li>
-                    <li><strong>Detailed Information:</strong> Click anywhere on the map for specific location data</li>
+                    <li><strong>Detailed Information:</strong> Click anywhere on the map for specific location data including travel advisories</li>
                 </ul>
 
                 <h2>How to Use</h2>
                 <ol>
                     <li>Select a month from the dropdown in the top-left corner</li>
-                    <li>Choose a weather variable from the layer selector on the left</li>
+                    <li>Choose a display mode from the layer selector:
+                        <ul>
+                            <li><strong>Overall:</strong> Combined score based on all your preferences</li>
+                            <li><strong>Temp:</strong> Temperature visualization</li>
+                            <li><strong>Rain:</strong> Rainfall visualization</li>
+                            <li><strong>Safety:</strong> Travel advisory levels by country</li>
+                            <li><strong>Sun:</strong> Sunshine hours visualization</li>
+                        </ul>
+                    </li>
+                    <li>Open the Climate Preferences panel to customize:
+                        <ul>
+                            <li>Preferred temperature range</li>
+                            <li>Acceptable rainfall levels</li>
+                            <li>Desired sunshine hours</li>
+                            <li><strong>Acceptable safety level:</strong> Set the maximum travel advisory level you're comfortable with (affects the Overall view)</li>
+                        </ul>
+                    </li>
                     <li>Explore the map by panning and zooming</li>
-                    <li>Click on any location to see detailed weather information</li>
-                    <li>Use the preferences panel to filter destinations based on your ideal conditions</li>
+                    <li>Click on any location to see detailed weather information and travel advisories (if Level 3 or higher)</li>
                 </ol>
 
                 <h2>Technology</h2>
@@ -241,6 +278,7 @@
                     <li><strong>ERA5:</strong> CC-BY 4.0 license - requires attribution to Copernicus Climate Change Service</li>
                     <li><strong>CRU:</strong> Open Government Licence v3.0 - requires attribution to CRU (University of East Anglia) and NCAS</li>
                     <li><strong>OpenStreetMap:</strong> ODbL license - requires attribution to © OpenStreetMap contributors</li>
+                    <li><strong>U.S. State Department Travel Advisories:</strong> Public Domain - U.S. Government data</li>
                 </ul>
                 <p>
                     This application is provided for informational and educational purposes. Weather data should be verified with current forecasts before making travel decisions.

@@ -33,21 +33,16 @@
         .map{width:100%;height:100%;min-height:600px;position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background-color:#aadaff}
     </style>
     
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-P5SWCPR7');</script>
+    <!-- End Google Tag Manager -->
+    
     <!-- Enzuzo Cookie Consent Banner -->
     <script defer src="https://app.enzuzo.com/scripts/cookiebar/5699ddde-e00d-11f0-97bb-6f1d64467c75"></script>
-    
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-5N6CMNKFPE"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-5N6CMNKFPE');
-    </script>
-    
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2423510297813794"
-         crossorigin="anonymous"></script>
     
     <!-- Leaflet CSS - load asynchronously to avoid render blocking -->
     <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -58,6 +53,10 @@
     <noscript><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251227"></noscript>
 </head>
 <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P5SWCPR7"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <div id="app">
         <header>
             <div class="header-content">
