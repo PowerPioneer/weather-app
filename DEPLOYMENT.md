@@ -161,9 +161,29 @@ sudo systemctl status weather-app
 If using nginx as reverse proxy, create `/etc/nginx/sites-available/weather-app`:
 
 ```nginx
+# Redirect www to non-www (for SEO canonical URL)
 server {
     listen 80;
-    server_name your-domain.com;
+    listen 443 ssl;
+    server_name www.wheretogoforgreatweather.com;
+    
+    # SSL certificates (if using https)
+    # ssl_certificate /etc/letsencrypt/live/wheretogoforgreatweather.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/wheretogoforgreatweather.com/privkey.pem;
+    
+    # 301 permanent redirect from www to non-www
+    return 301 $scheme://wheretogoforgreatweather.com$request_uri;
+}
+
+# Main server block (non-www)
+server {
+    listen 80;
+    server_name wheretogoforgreatweather.com;
+    
+    # Uncomment for HTTPS:
+    # listen 443 ssl;
+    # ssl_certificate /etc/letsencrypt/live/wheretogoforgreatweather.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/wheretogoforgreatweather.com/privkey.pem;
 
     location / {
         proxy_pass http://127.0.0.1:5000;
@@ -193,9 +213,33 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
+**Important for SEO:** The configuration above redirects all `www.` traffic to the non-www version (e.g., `www.wheretogoforgreatweather.com` → `wheretogoforgreatweather.com`). This prevents duplicate content issues in Google Search Console. The canonical URL tags in the HTML templates will also point to the non-www version.
+
 ---
 
 ## Deploying Updates (Git Pull Workflow)
+
+### Quick Deployment with deploy.sh
+
+The easiest way to deploy updates is using the included `deploy.sh` script:
+
+```bash
+# SSH into server
+ssh user@your-server-ip
+
+# Navigate to app directory
+cd /var/www/Where\ to\ go\ for\ great\ weather
+
+# Run deployment script
+./deploy.sh
+```
+
+The script will:
+1. Pull latest code from git
+2. Install/update dependencies
+3. Warm Redis cache
+4. Restart the service
+5. Verify the service is running
 
 ### Method 1: Manual Deployment
 
@@ -225,58 +269,37 @@ sudo systemctl status weather-app
 sudo journalctl -u weather-app -f
 ```
 
-### Method 2: Deployment Script
+**Note:** The `deploy.sh` script (Method 2 below) automates all these steps.
 
-Create `deploy.sh` in your project root:
+### Method 2: Using the Deployment Script
+
+The repository includes a `deploy.sh` script that's already been created. First time setup:
 
 ```bash
-#!/bin/bash
-# Deployment script for weather app
+# SSH into server
+ssh user@your-server-ip
 
-set -e  # Exit on error
+# Navigate to app directory
+cd /var/www/Where\ to\ go\ for\ great\ weather
 
-echo "🚀 Starting deployment..."
-
-# Pull latest code
-echo "📥 Pulling latest changes..."
-git pull origin main
-
-# Activate virtual environment
-source venv/bin/activate
-
-# Install/update dependencies
-echo "📦 Updating dependencies..."
-pip install -r requirements-server.txt
-
-# Warm cache if Redis is available
-echo "🔥 Warming Redis cache..."
-python scripts/warm_cache.py || echo "⚠️  Cache warming skipped (Redis not available)"
-
-# Restart service
-echo "🔄 Restarting service..."
-sudo systemctl restart weather-app
-
-# Check if service is running
-if systemctl is-active --quiet weather-app; then
-    echo "✅ Deployment successful! Service is running."
-else
-    echo "❌ Deployment failed! Service is not running."
-    sudo systemctl status weather-app
-    exit 1
-fi
-
-echo "✨ Deployment complete!"
-```
-
-Make it executable:
-```bash
+# Make the script executable (only needed once)
 chmod +x deploy.sh
 ```
 
-Then deploy with:
+Then for all future deployments:
+
 ```bash
 ./deploy.sh
 ```
+
+The script handles everything automatically:
+- Pulls latest code from git
+- Activates virtual environment
+- Installs/updates dependencies
+- Warms Redis cache (if available)
+- Restarts the service
+- Verifies the service is running
+- Shows deployment status
 
 ### Method 3: Zero-Downtime Deployment
 

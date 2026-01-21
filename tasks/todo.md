@@ -1,5 +1,84 @@
 # Where to go for great weather - Bug Fixes
 
+## Google Search Console SEO Fixes (21 Jan 2026)
+
+### Probleem
+Google Search Console meldt:
+- "Page with redirect" (2 pages)
+- "Duplicate without user-selected canonical" (1 page)
+
+De site is bereikbaar via beide:
+- http://wheretogoforgreatweather.com/
+- http://www.wheretogoforgreatweather.com/
+
+Dit veroorzaakt duplicate content issues.
+
+### Oplossing
+1. Canonical URL tags toevoegen aan alle HTML templates
+2. Nginx configuratie voor www → non-www redirect (301)
+3. Kies non-www als canonical (wheretogoforgreatweather.com)
+
+### Todo Items
+- [x] 1. Voeg canonical URL tags toe aan alle HTML templates (index, about, privacy, terms, cookies)
+- [x] 2. Voeg Flask helper functie toe voor canonical URL generation
+- [x] 3. Update DEPLOYMENT.md met nginx configuratie voor www redirect
+- [x] 4. Maak deploy.sh script met cache warming
+
+### Wijzigingen Gemaakt
+
+#### 1. Flask Backend (`app/routes.py`)
+- Nieuwe `get_canonical_url()` helper functie die automatisch non-www URL genereert
+- Alle 5 routes updaten om `canonical_url` door te geven aan templates
+
+#### 2. HTML Templates (5 bestanden)
+- `<link rel="canonical">` tag toegevoegd aan alle templates:
+  - index.html
+  - about.html
+  - privacy.html
+  - terms.html
+  - cookies.html
+
+#### 3. Deployment Script (`deploy.sh`)
+- Nieuw bash script voor geautomatiseerde deployment
+- Bevat: git pull, pip install, cache warming, service restart, status check
+
+#### 4. Nginx Configuratie (`DEPLOYMENT.md`)
+- Toegevoegd: www → non-www redirect server block (301)
+- Hoofdserver block voor non-www domein
+- Instructies voor beide HTTP en HTTPS
+
+### Server Acties (Eenmalig uit te voeren)
+
+Na git pull op de server:
+
+1. **Maak deploy.sh executable:**
+   ```bash
+   chmod +x deploy.sh
+   ```
+
+2. **Update nginx configuratie:**
+   - Bewerk `/etc/nginx/sites-available/weather-app`
+   - Voeg www redirect block toe (zie DEPLOYMENT.md)
+   - Test en herlaad nginx:
+     ```bash
+     sudo nginx -t
+     sudo systemctl reload nginx
+     ```
+
+3. **Deploy de code wijzigingen:**
+   ```bash
+   ./deploy.sh
+   ```
+
+### Verwachte Resultaten
+
+✅ Canonical tags in alle pagina's (inspect source)
+✅ www.wheretogoforgreatweather.com → wheretogoforgreatweather.com (301 redirect)
+✅ Google Search Console ziet één canonical versie
+✅ "Page with redirect" en "Duplicate content" warnings verdwijnen (na 1-2 weken)
+
+---
+
 ## Current Issues (November 30, 2025)
 
 ### Issue 1: Map Projection Offset (Data appearing north of actual location)

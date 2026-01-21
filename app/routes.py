@@ -14,6 +14,21 @@ api_bp = Blueprint('api', __name__, url_prefix='/api')
 # __file__ is in app/routes.py, so parent is app/, and we need to go to app/static/data/
 DATA_FILE = Path(__file__).parent / "static" / "data" / "era5_stats.json"
 
+def get_canonical_url():
+    """
+    Generate the canonical URL for the current page (non-www version).
+    
+    Returns:
+        Canonical URL string with https and without www
+    """
+    # Get the full URL
+    url = request.url
+    
+    # Replace www. with nothing and ensure https
+    canonical = url.replace('http://', 'https://').replace('www.', '')
+    
+    return canonical
+
 def cached_jsonify(data, max_age=86400, etag_base=None):
     """
     Create a JSON response with HTTP caching headers.
@@ -84,7 +99,8 @@ def index():
     
     response = make_response(render_template('index.html', 
                          current_month=current_month,
-                         initial_country_data=initial_data_json))
+                         initial_country_data=initial_data_json,
+                         canonical_url=get_canonical_url()))
     # Cache for 1 hour (dynamic content with current month)
     response.headers['Cache-Control'] = 'public, max-age=3600'
     return response
@@ -92,7 +108,8 @@ def index():
 @main_bp.route('/about')
 def about():
     """Render the about page."""
-    response = make_response(render_template('about.html'))
+    response = make_response(render_template('about.html',
+                         canonical_url=get_canonical_url()))
     # Cache for 1 day (static content)
     response.headers['Cache-Control'] = 'public, max-age=86400'
     return response
@@ -100,7 +117,8 @@ def about():
 @main_bp.route('/privacy')
 def privacy():
     """Render the privacy policy page."""
-    response = make_response(render_template('privacy.html'))
+    response = make_response(render_template('privacy.html',
+                         canonical_url=get_canonical_url()))
     # Cache for 1 day (static content)
     response.headers['Cache-Control'] = 'public, max-age=86400'
     return response
@@ -108,7 +126,8 @@ def privacy():
 @main_bp.route('/terms')
 def terms():
     """Render the terms of service page."""
-    response = make_response(render_template('terms.html'))
+    response = make_response(render_template('terms.html',
+                         canonical_url=get_canonical_url()))
     # Cache for 1 day (static content)
     response.headers['Cache-Control'] = 'public, max-age=86400'
     return response
@@ -116,7 +135,8 @@ def terms():
 @main_bp.route('/cookies')
 def cookies():
     """Render the cookie policy page."""
-    response = make_response(render_template('cookies.html'))
+    response = make_response(render_template('cookies.html',
+                         canonical_url=get_canonical_url()))
     # Cache for 1 day (static content)
     response.headers['Cache-Control'] = 'public, max-age=86400'
     return response
