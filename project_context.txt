@@ -1,0 +1,32 @@
+Project Context: "Where to go for great weather"
+
+A Flask-based weather visualization web app that helps users find destinations with optimal weather conditions.
+
+Tech Stack:
+
+Backend: Python/Flask, Gunicorn
+Caching: Redis (optional, with fallback)
+Frontend: Leaflet.js maps, vanilla JavaScript
+Analytics: Google Tag Manager (GTM-P5SWCPR7)
+Deployment: Scaleway VPS, systemd service, nginx reverse proxy
+Key Features:
+
+Interactive map with 12 monthly weather layers (provinces_month_1-12.geojson)
+Country-level aggregation (countries_month_1-12.geojson)
+U.S. State Department Travel Advisory safety levels (Level 1-4) integrated in province data
+Temperature/precipitation filters
+Redis caching for GeoJSON files (24 files total)
+File Structure:
+
+app.py - Main Flask application
+templates - HTML templates (index, about, privacy, terms, cookies)
+static/geojson/ - 24 GeoJSON files (optimized, ~500KB each)
+scripts - Data processing (aggregate_province_data.py, warm_cache.py)
+DEPLOYMENT.md - Complete deployment guide
+GTM_TAG_IDS.md - Analytics configuration reference
+Recent Changes:
+
+Migrated from direct GA/AdSense to Google Tag Manager
+Added travel safety data with 100+ country name mappings
+All province GeoJSON files regenerated with safety levels
+Deployment: Git pull → pip install → systemctl reload weather-app (zero-downtime)

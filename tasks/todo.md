@@ -1,5 +1,44 @@
 # Where to go for great weather - Bug Fixes
 
+## Console Errors Investigation (22 Jan 2026)
+
+### Problem
+Developer console shows multiple warnings:
+1. Preload for Leaflet.js found but not used (credential mode mismatch)
+2. Tracking Prevention blocking storage access for Leaflet CDN resources
+3. Cookie banner warning (Enzuzo)
+
+### Analysis
+✅ **No old Google Analytics tags found** - only GTM (GTM-P5SWCPR7) is present
+✅ **No old gtag() or ga() calls** in JavaScript files
+✅ **No conflicting AdSense scripts** in HTML
+
+**Root Cause:**
+- Leaflet preload has incorrect `crossorigin` attribute without value
+- Should either be `crossorigin="anonymous"` or removed entirely
+- Tracking Prevention warnings are normal browser privacy behavior (not a bug)
+
+### Solution
+Fix preload and preconnect attributes to match actual resource loading:
+1. Remove/fix `crossorigin` on Leaflet preload (line 17)
+2. Add `crossorigin="anonymous"` to preconnect hints (lines 10-12)
+3. Remove `crossorigin` from CSS preload (line 57)
+
+### Todo Items
+- [x] 1. Remove crossorigin from Leaflet JS preload (line 17) 
+- [x] 2. Update preconnect hints to use crossorigin="anonymous" (lines 10-12)
+- [x] 3. Remove crossorigin from Leaflet CSS preload (line 57)
+
+### Changes
+✅ Removed `crossorigin` attributes from:
+- Leaflet JS preload (line 17)
+- Preconnect hints for unpkg.com, cdn.jsdelivr.net, app.enzuzo.com (lines 10-12)  
+- Leaflet CSS preload (line 57)
+
+These changes eliminate the "preload not used" console warning by ensuring credential modes match between preload hints and actual resource requests.
+
+---
+
 ## Google Search Console SEO Fixes (21 Jan 2026)
 
 ### Probleem
