@@ -135,7 +135,7 @@ header p {
     height: 3px;
     background-color: #ffffff;
     border-radius: 2px;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 .hamburger-menu:hover span {
@@ -166,7 +166,7 @@ header p {
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
     z-index: 1000;
     overflow: hidden;
 }
@@ -233,7 +233,7 @@ main {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     z-index: 1001;
     backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
 }
 
 .climate-preferences-sidebar.collapsed {
@@ -265,7 +265,7 @@ main {
     font-size: 0.95rem;
     font-weight: 600;
     width: 100%;
-    transition: all 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -400,6 +400,13 @@ main {
     margin-bottom: 0.75rem;
 }
 
+.display-mode-section h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #2d4f4c;
+}
+
 .mode-buttons {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -418,7 +425,7 @@ main {
     border-radius: 8px;
     padding: 0.4rem 0.3rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
     font-size: 0.8rem;
     font-weight: 500;
     color: #2c3e3b;
@@ -436,6 +443,8 @@ main {
 .mode-btn:hover {
     border-color: #4a7d78;
     background: #e8f2f0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .mode-btn.active {
@@ -671,13 +680,14 @@ main {
     font-size: 0.95rem;
     font-weight: 600;
     color: #666;
-    transition: all 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .temp-unit-btn:hover {
     border-color: #4a7d78;
     color: #4a7d78;
     transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .temp-unit-btn.active {
@@ -697,7 +707,7 @@ main {
     cursor: pointer;
     font-size: 0.95rem;
     font-weight: 600;
-    transition: all 0.3s;
+    transition: transform 0.3s, box-shadow 0.3s;
     display: flex;
     align-items: center;
     justify-content: center;

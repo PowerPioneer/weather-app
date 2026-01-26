@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="description" content="Plan your trip with perfect weather! Interactive map shows best destinations by month. Combines sunshine, rainfall, temperature data & official travel advisories.">
     <link rel="canonical" href="{{ canonical_url }}">
     <title>Where to Go for Great Weather</title>
@@ -13,8 +13,17 @@
     <!-- Preconnect to external domains for faster resource loading -->
     <link rel="preconnect" href="https://unpkg.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://a.tile.openstreetmap.org" crossorigin>
+    <link rel="preconnect" href="https://b.tile.openstreetmap.org" crossorigin>
+    <link rel="preconnect" href="https://c.tile.openstreetmap.org" crossorigin>
     <link rel="dns-prefetch" href="https://www.googletagmanager.com">
     <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com">
+    
+    <!-- Preload LCP map tiles for faster initial render (zoom level 2 for mobile) -->
+    <link rel="preload" href="https://a.tile.openstreetmap.org/2/1/1.png" as="image" fetchpriority="high">
+    <link rel="preload" href="https://b.tile.openstreetmap.org/2/2/1.png" as="image">
+    <link rel="preload" href="https://c.tile.openstreetmap.org/2/1/0.png" as="image">
+    <link rel="preload" href="https://a.tile.openstreetmap.org/2/2/0.png" as="image">
     
     <!-- Preload critical resources for LCP optimization -->
     <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script" crossorigin="anonymous">
@@ -142,7 +151,7 @@
                         
                         <!-- Display Mode Selector -->
                         <div class="display-mode-section">
-                            <h3>Display Mode</h3>
+                            <h2>Display Mode</h2>
                             <div class="mode-buttons">
                                 <button class="mode-btn mode-btn-overall active" data-mode="overall">
                                     My Preferences
@@ -166,8 +175,8 @@
                         <div class="preference-section">
                             <h3>Temperature: <span id="tempRange">18°C - 28°C</span></h3>
                             <div class="dual-slider temp-slider">
-                                <input type="range" id="tempMin" class="temp-min-slider" min="-20" max="50" value="18" step="1">
-                                <input type="range" id="tempMax" class="temp-max-slider" min="-20" max="50" value="28" step="1">
+                                <input type="range" id="tempMin" class="temp-min-slider" min="-20" max="50" value="18" step="1" aria-label="Minimum temperature">
+                                <input type="range" id="tempMax" class="temp-max-slider" min="-20" max="50" value="28" step="1" aria-label="Maximum temperature">
                                 <div class="slider-track"></div>
                                 <span class="temp-label temp-min-label">min</span>
                                 <span class="temp-label temp-max-label">max</span>
@@ -197,8 +206,8 @@
                                 </div>
                             </h3>
                             <div class="dual-slider">
-                                <input type="range" id="rainMin" min="0" max="20" value="0" step="0.5">
-                                <input type="range" id="rainMax" min="0" max="20" value="3" step="0.5">
+                                <input type="range" id="rainMin" min="0" max="20" value="0" step="0.5" aria-label="Minimum rainfall">
+                                <input type="range" id="rainMax" min="0" max="20" value="3" step="0.5" aria-label="Maximum rainfall">
                                 <div class="slider-track"></div>
                             </div>
                         </div>
@@ -207,8 +216,8 @@
                         <div class="preference-section">
                             <h3>Sunshine: <span id="sunRange">6 - 12 h/day</span></h3>
                         <div class="dual-slider">
-                            <input type="range" id="sunMin" min="0" max="15" value="6" step="0.5">
-                            <input type="range" id="sunMax" min="0" max="15" value="12" step="0.5">
+                            <input type="range" id="sunMin" min="0" max="15" value="6" step="0.5" aria-label="Minimum sunshine hours">
+                            <input type="range" id="sunMax" min="0" max="15" value="12" step="0.5" aria-label="Maximum sunshine hours">
                             <div class="slider-track"></div>
                         </div>
                     </div>
@@ -216,7 +225,7 @@
                         <!-- Safety Level Selector -->
                         <div class="preference-section">
                             <h3>Acceptable safety level: <span id="safetyLevel">Caution</span></h3>
-                            <input type="range" id="safetySlider" class="safety-slider" min="1" max="4" value="2" step="1">
+                            <input type="range" id="safetySlider" class="safety-slider" min="1" max="4" value="2" step="1" aria-label="Maximum acceptable travel safety level">
                             <div class="safety-labels">
                                 <span>Normal</span>
                                 <span>Caution</span>
