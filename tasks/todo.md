@@ -1,41 +1,60 @@
 # Where to go for great weather - Bug Fixes
 
-## Console Errors Investigation (22 Jan 2026)
+## Console Errors Investigation - NIEUWE FIX (26 Jan 2026)
 
 ### Problem
-Developer console shows multiple warnings:
-1. Preload for Leaflet.js found but not used (credential mode mismatch)
-2. Tracking Prevention blocking storage access for Leaflet CDN resources
-3. Cookie banner warning (Enzuzo)
+Developer console toont TWEE warnings over Leaflet library:
+1. **Preload Credentials Mismatch**: "A preload for 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' is found, but is not used because the request credentials mode does not match."
+2. **Unused Preload (2x)**: "The resource https://unpkg.com/leaflet@1.9.4/dist/leaflet.js was preloaded using link preload but not used within a few seconds from the window's load event."
 
-### Analysis
-✅ **No old Google Analytics tags found** - only GTM (GTM-P5SWCPR7) is present
-✅ **No old gtag() or ga() calls** in JavaScript files
-✅ **No conflicting AdSense scripts** in HTML
+### Analysis - NIEUWE INZICHTEN
+❌ **Vorige fix was VERKEERD** - we hebben crossorigin juist VERWIJDERD, maar dat was niet de oplossing!
 
-**Root Cause:**
-- Leaflet preload has incorrect `crossorigin` attribute without value
-- Should either be `crossorigin="anonymous"` or removed entirely
-- Tracking Prevention warnings are normal browser privacy behavior (not a bug)
+**Correcte Root Cause:**
+- Externe CDN resources (unpkg.com) zijn **CORS resources**
+- Zowel preload als script tag hebben `crossorigin="anonymous"` NODIG
+- De credentials mode moet matchen tussen preload en het daadwerkelijke script
+- ZONDER crossorigin attribuut proberen ze verschillende credential modes te gebruiken
 
-### Solution
-Fix preload and preconnect attributes to match actual resource loading:
-1. Remove/fix `crossorigin` on Leaflet preload (line 17)
-2. Add `crossorigin="anonymous"` to preconnect hints (lines 10-12)
-3. Remove `crossorigin` from CSS preload (line 57)
+### Correcte Oplossing (volgens MDN en browser best practices)
+Voeg `crossorigin="anonymous"` toe aan:
+1. De Leaflet JS preload link (regel 17)
+2. Het Leaflet JS script tag (regel 316)
+
+Dit zorgt ervoor dat beide dezelfde CORS credentials mode gebruiken.
 
 ### Todo Items
-- [x] 1. Remove crossorigin from Leaflet JS preload (line 17) 
-- [x] 2. Update preconnect hints to use crossorigin="anonymous" (lines 10-12)
-- [x] 3. Remove crossorigin from Leaflet CSS preload (line 57)
+- [x] 1. Voeg `crossorigin="anonymous"` toe aan Leaflet JS preload (regel 17)
+- [x] 2. Voeg `crossorigin="anonymous"` toe aan Leaflet JS script tag (regel 316)
+- [x] 3. Test in browser console of beide warnings verdwenen zijn
 
-### Changes
+### Implementatie
+✅ **Wijzigingen toegepast:**
+- Regel 17: `<link rel="preload" ... crossorigin="anonymous">` toegevoegd
+- Regel 316: `<script defer ... crossorigin="anonymous"></script>` toegevoegd
+
+**Waarom dit werkt:**
+- Externe CDN resources (unpkg.com) zijn CORS resources
+- Browser vereist dat preload en script dezelfde credentials mode gebruiken
+- `crossorigin="anonymous"` betekent: geen credentials (cookies, auth) worden meegestuurd
+- Nu matchen de credentials modes en wordt de preload correct gebruikt
+
+**Resultaat:**
+- ✅ Credentials mismatch warning verdwijnt
+- ✅ Unused preload warning verdwijnt
+- ✅ Browser kan Leaflet.js nu correct preloaden voor betere performance
+
+---
+
+## OUDE Console Errors Investigation (22 Jan 2026) - SUPERSEDED
+
+### Changes (VERKEERDE FIX)
 ✅ Removed `crossorigin` attributes from:
 - Leaflet JS preload (line 17)
 - Preconnect hints for unpkg.com, cdn.jsdelivr.net, app.enzuzo.com (lines 10-12)  
 - Leaflet CSS preload (line 57)
 
-These changes eliminate the "preload not used" console warning by ensuring credential modes match between preload hints and actual resource requests.
+**NOTE: Deze fix was incorrect - we moeten crossorigin juist TOEVOEGEN, niet verwijderen!**
 
 ---
 

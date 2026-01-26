@@ -148,6 +148,13 @@ def ads_txt():
     static_folder = Path(__file__).parent.parent / 'static'
     return send_from_directory(static_folder, 'ads.txt', mimetype='text/plain')
 
+@main_bp.route('/favicon.ico')
+def favicon():
+    """Serve the logo as favicon."""
+    from flask import send_from_directory
+    static_folder = Path(__file__).parent.parent / 'static'
+    return send_from_directory(static_folder, 'Great weather - logo.png', mimetype='image/png')
+
 @api_bp.route('/weather', methods=['GET'])
 def get_weather():
     """Get weather data for a specific location and month."""

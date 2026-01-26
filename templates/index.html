@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Plan your vacation based on historical weather data. Interactive world map showing temperature, rainfall, and sunshine hours by month.">
+    <meta name="description" content="Plan your trip with perfect weather! Interactive map shows best destinations by month. Combines sunshine, rainfall, temperature data & official travel advisories.">
     <link rel="canonical" href="{{ canonical_url }}">
     <title>Where to Go for Great Weather</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='Great weather - logo.png') }}">
     
     <!-- Preconnect to external domains for faster resource loading -->
     <link rel="preconnect" href="https://unpkg.com">
@@ -14,7 +17,7 @@
     <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com">
     
     <!-- Preload critical resources for LCP optimization -->
-    <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script">
+    <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script" crossorigin="anonymous">
     
     <!-- Critical CSS - inline for immediate rendering -->
     <style>
@@ -313,7 +316,7 @@
     </script>
 
     <!-- Leaflet JS - defer to avoid render blocking -->
-    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
     
     <!-- Chart.js - lazy load only when needed (when user clicks a location) -->
     <script>
