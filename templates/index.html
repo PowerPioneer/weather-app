@@ -347,15 +347,6 @@
         };
     </script>
     
-    <!-- Preloaded country data for faster initial load -->
-    <script>
-        // Inject preloaded country data from server
-        window.PRELOADED_COUNTRY_DATA = {
-            month: {{ current_month }},
-            data: {{ initial_country_data|safe }}
-        };
-    </script>
-    
-    <script defer src="{{ url_for('static', filename='script.min.js') }}?v=20260126"></script>
+    <script defer src="{{ url_for('static', filename='script.min.js') }}?v=20260126b"></script>
 </body>
 </html>

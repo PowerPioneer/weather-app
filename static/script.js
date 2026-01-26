@@ -1671,25 +1671,86 @@ function formatCriteriaIcons(result) {
     return icons.join(' ');
 }
 
+// Web Worker for TopoJSON conversion (lazy initialized)
+let topoWorker = null;
+let topoWorkerReady = false;
+
 /**
- * Convert TopoJSON to GeoJSON using topojson-client library
+ * Initialize the TopoJSON Web Worker
+ */
+function initTopoWorker() {
+    if (topoWorker) return;
+    
+    try {
+        topoWorker = new Worker('/static/topoWorker.js');
+        topoWorkerReady = true;
+        console.log('TopoJSON Web Worker initialized');
+    } catch (e) {
+        console.warn('Web Worker not supported, falling back to main thread:', e);
+        topoWorkerReady = false;
+    }
+}
+
+/**
+ * Convert TopoJSON to GeoJSON using Web Worker (async, non-blocking)
+ * Falls back to main thread if Web Worker is not available
  * @param {object} topojsonData - TopoJSON data from server
  * @param {string} objectName - Name of the object to extract (e.g., 'countries', 'provinces')
+ * @returns {Promise<object>} GeoJSON FeatureCollection
+ */
+async function topoJsonToGeoJson(topojsonData, objectName) {
+    // Initialize worker if not done yet
+    initTopoWorker();
+    
+    // Use Web Worker if available
+    if (topoWorker && topoWorkerReady) {
+        return new Promise((resolve, reject) => {
+            const handleMessage = (e) => {
+                topoWorker.removeEventListener('message', handleMessage);
+                topoWorker.removeEventListener('error', handleError);
+                
+                if (e.data.error) {
+                    console.error('Web Worker error:', e.data.error);
+                    resolve(null);
+                } else {
+                    resolve(e.data.geojson);
+                }
+            };
+            
+            const handleError = (error) => {
+                topoWorker.removeEventListener('message', handleMessage);
+                topoWorker.removeEventListener('error', handleError);
+                console.error('Web Worker error:', error);
+                // Fall back to main thread
+                resolve(topoJsonToGeoJsonSync(topojsonData, objectName));
+            };
+            
+            topoWorker.addEventListener('message', handleMessage);
+            topoWorker.addEventListener('error', handleError);
+            topoWorker.postMessage({ topojsonData, objectName });
+        });
+    }
+    
+    // Fallback to synchronous conversion on main thread
+    return topoJsonToGeoJsonSync(topojsonData, objectName);
+}
+
+/**
+ * Synchronous TopoJSON to GeoJSON conversion (fallback for browsers without Web Worker)
+ * @param {object} topojsonData - TopoJSON data from server
+ * @param {string} objectName - Name of the object to extract
  * @returns {object} GeoJSON FeatureCollection
  */
-function topoJsonToGeoJson(topojsonData, objectName) {
+function topoJsonToGeoJsonSync(topojsonData, objectName) {
     if (!window.topojson) {
         console.error('TopoJSON client library not loaded');
         return null;
     }
     
-    // Find the object name in the TopoJSON
     const objectKeys = Object.keys(topojsonData.objects || {});
-    
-    // Try to find the requested object, fall back to first available
     let targetObject = objectName;
+    
     if (!topojsonData.objects || !topojsonData.objects[targetObject]) {
-        // Object name not found, use first available key
         targetObject = objectKeys[0];
         console.log(`Object "${objectName}" not found, using "${targetObject}" instead`);
     }
@@ -1699,9 +1760,7 @@ function topoJsonToGeoJson(topojsonData, objectName) {
         return null;
     }
     
-    // Convert to GeoJSON
-    const geojson = topojson.feature(topojsonData, topojsonData.objects[targetObject]);
-    return geojson;
+    return topojson.feature(topojsonData, topojsonData.objects[targetObject]);
 }
 
 /**
@@ -1793,8 +1852,8 @@ async function fetchCombinedData(month, layerType, bounds = null) {
         // Convert TopoJSON to GeoJSON if format is topojson
         let geojsonData;
         if (result.format === 'topojson') {
-            console.log('Converting TopoJSON to GeoJSON...');
-            geojsonData = topoJsonToGeoJson(result.data, layerType);
+            console.log('Converting TopoJSON to GeoJSON via Web Worker...');
+            geojsonData = await topoJsonToGeoJson(result.data, layerType);
             if (!geojsonData) {
                 console.error('Failed to convert TopoJSON to GeoJSON');
                 return null;
@@ -1836,59 +1895,14 @@ async function createCountryOverlay() {
     state.isLoading = true;
     
     try {
-        // Check if we have preloaded data (only on initial load with default viewport)
-        let geojsonData;
+        // Fetch country data via combined endpoint
+        // Country data is small enough (~640KB TopoJSON) that bounds filtering isn't necessary
+        const geojsonData = await fetchCombinedData(month, 'countries', null);
         
-        // Use preloaded data only if it exists and matches the current month
-        if (window.PRELOADED_COUNTRY_DATA && 
-            window.PRELOADED_COUNTRY_DATA.month === month && 
-            window.PRELOADED_COUNTRY_DATA.data) {
-            console.log('Using preloaded country data from HTML');
-            const preloadedData = window.PRELOADED_COUNTRY_DATA.data;
-            
-            // Check if preloaded data is TopoJSON (has 'objects' and 'arcs' properties)
-            if (preloadedData.objects && preloadedData.arcs) {
-                console.log('Preloaded data is TopoJSON, converting...');
-                geojsonData = topoJsonToGeoJson(preloadedData, 'countries');
-                if (!geojsonData) {
-                    console.error('Failed to convert preloaded TopoJSON');
-                    geojsonData = null;
-                } else {
-                    console.log(`✓ Preloaded TopoJSON converted: ${geojsonData.features.length} features`);
-                    // Cache the converted GeoJSON
-                    state.combinedDataCache[`${month}-countries`] = geojsonData;
-                }
-            } else {
-                // Legacy GeoJSON format
-                geojsonData = preloadedData;
-            }
-            
-            // Clear preloaded data after use to free memory
-            window.PRELOADED_COUNTRY_DATA = null;
-        } else {
-            // For countries, load all data without bounds filtering
-            // Country data is small enough (~640KB TopoJSON) that filtering isn't necessary
-            // and this avoids issues with international date line wrapping
-            geojsonData = await fetchCombinedData(month, 'countries', null);
-            
-            // If combined endpoint fails or is not available, fall back to single variable endpoint
-            if (!geojsonData) {
-                console.log('Combined endpoint failed, falling back to single variable endpoint');
-                const baseUrl = `/api/countries?month=${month}&variable=${variable}`;
-                const url = addCacheBuster(baseUrl);
-                console.log(`Fetching country data: ${url}`);
-                
-                const response = await fetch(url);
-                const result = await response.json();
-                
-                if (result.error) {
-                    console.error('Error fetching country data:', result.error);
-                    state.isLoading = false;
-                    return;
-                }
-                
-                geojsonData = result.data;
-            }
+        if (!geojsonData) {
+            console.error('Failed to load country data');
+            state.isLoading = false;
+            return;
         }
         
         // Map variable names to data field names
@@ -2271,33 +2285,13 @@ async function createProvinceOverlay() {
         
         console.log(`Province viewport bounds: N=${mapBounds.north.toFixed(2)}, S=${mapBounds.south.toFixed(2)}, E=${mapBounds.east.toFixed(2)}, W=${mapBounds.west.toFixed(2)}`);
         
-        // Try to fetch from combined endpoint first (more efficient - one request for all variables)
-        let geojsonData = await fetchCombinedData(month, 'provinces', mapBounds);
+        // Fetch province data via combined endpoint with client-side bounds filtering
+        const geojsonData = await fetchCombinedData(month, 'provinces', mapBounds);
         
-        // If combined endpoint fails or is not available, fall back to single variable endpoint
         if (!geojsonData) {
-            console.log('Combined endpoint failed, falling back to single variable endpoint');
-            const baseUrl = `/api/provinces?month=${month}&variable=${variable}&` +
-                       `north=${mapBounds.north}&south=${mapBounds.south}&` +
-                       `east=${mapBounds.east}&west=${mapBounds.west}`;
-            const url = addCacheBuster(baseUrl);
-            console.log(`Fetching province data: ${url}`);
-            
-            const response = await fetch(url);
-            const result = await response.json();
-            
-            if (result.error) {
-                console.error('Error fetching province data:', result.error);
-                state.isLoading = false;
-                return;
-            }
-            
-            geojsonData = result.data;
-            
-            // Log filtering stats if available
-            if (result.filtered) {
-                console.log(`Viewport filtering: ${result.feature_count} provinces in view`);
-            }
+            console.error('Failed to load province data');
+            state.isLoading = false;
+            return;
         }
         
         // Map variable names to data field names
