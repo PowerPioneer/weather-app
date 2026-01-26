@@ -49,8 +49,8 @@
     <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
     
     <!-- Main CSS - load asynchronously after critical CSS -->
-    <link rel="preload" href="{{ url_for('static', filename='style.css') }}?v=20251227" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=20251227"></noscript>
+    <link rel="preload" href="{{ url_for('static', filename='style.min.css') }}?v=20260126" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ url_for('static', filename='style.min.css') }}?v=20260126"></noscript>
 </head>
 <body>
     <!-- Google Tag Manager (noscript) -->
@@ -318,6 +318,9 @@
     <!-- Leaflet JS - defer to avoid render blocking -->
     <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
     
+    <!-- TopoJSON Client - for converting TopoJSON to GeoJSON (reduces payload ~60%) -->
+    <script defer src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js" crossorigin="anonymous"></script>
+    
     <!-- Chart.js - lazy load only when needed (when user clicks a location) -->
     <script>
         window.loadChartJS = function() {
@@ -344,6 +347,6 @@
         };
     </script>
     
-    <script defer src="{{ url_for('static', filename='script.js') }}?v=20251231-003"></script>
+    <script defer src="{{ url_for('static', filename='script.min.js') }}?v=20260126"></script>
 </body>
 </html>

@@ -91,7 +91,9 @@ def index():
     
     # Preload country data for current month to speed up initial load
     # This embeds the data directly in HTML, avoiding the first API call
-    initial_country_data = get_country_data_for_variable(current_month, 'overall')
+    # Data is TopoJSON format - client will convert to GeoJSON
+    from app.country_loader import get_country_data
+    initial_country_data = get_country_data(current_month)
     
     # Convert to JSON string for embedding in script tag
     import json
@@ -564,59 +566,38 @@ def get_combined_data():
             }
         
         # Load data based on layer type
+        # Note: Data is served as TopoJSON which cannot be filtered server-side
+        # Filtering happens client-side after conversion to GeoJSON
         if layer_type == 'countries':
             # Get base country data (contains all variables)
             from app.country_loader import get_country_data
             data = get_country_data(month)
-            
-            if bounds:
-                from app.country_loader import filter_by_bounds
-                data = filter_by_bounds(
-                    data,
-                    bounds.get('north'),
-                    bounds.get('south'),
-                    bounds.get('east'),
-                    bounds.get('west')
-                )
         else:  # provinces
             # Get base province data (contains all variables)
             from app.province_loader import get_province_data
             data = get_province_data(month)
-            
-            if bounds:
-                from app.province_loader import filter_by_bounds
-                data = filter_by_bounds(
-                    data,
-                    bounds.get('north'),
-                    bounds.get('south'),
-                    bounds.get('east'),
-                    bounds.get('west')
-                )
         
         if not data:
             return jsonify({'error': f'{layer_type.capitalize()} data not available for this month'}), 404
         
-        # Data already contains all variables (temp_avg, prec_mean, sunhours_mean, overall_score)
-        # No need to filter - frontend can extract what it needs
+        # Data is now served as TopoJSON format (60% smaller than GeoJSON)
+        # Client converts to GeoJSON using topojson-client library
+        # Note: bounds filtering happens client-side with TopoJSON
         
         response_data = {
             'month': month,
             'layer_type': layer_type,
             'data': data,
+            'format': 'topojson',  # Indicate format for client
             'variables': ['temperature', 'rainfall', 'sunshine', 'overall']
         }
         
-        # Add debug info
-        if bounds:
-            response_data['filtered'] = True
-            response_data['feature_count'] = len(data.get('features', []))
+        # TopoJSON doesn't have features array, so no feature count available
+        # Bounds filtering happens client-side
         
         # Cache for 24 hours - combined data is static
-        # Include bounds in ETag when filtering to avoid cache collisions across different viewports
-        if bounds:
-            etag_base = f"combined-{layer_type}-{month}-{bounds['north']}-{bounds['south']}-{bounds['east']}-{bounds['west']}"
-        else:
-            etag_base = f"combined-{layer_type}-{month}"
+        # No bounds in ETag since filtering is client-side
+        etag_base = f"combined-topojson-{layer_type}-{month}"
         return cached_jsonify(response_data, max_age=86400, etag_base=etag_base)
         
     except (ValueError, TypeError) as e:

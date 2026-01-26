@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Warm Redis cache by pre-loading all GeoJSON files.
+Warm Redis cache by pre-loading all TopoJSON files.
 Run this script after deployment or Redis restart to eliminate cold-start delays.
 """
 

@@ -7,8 +7,8 @@ from pathlib import Path
 import geopandas as gpd
 from app.cache import get_cached_geojson, geojson_province_key
 
-# Path to province data (optimized for web serving)
-PROVINCES_DIR = Path(__file__).parent.parent / "data" / "provinces" / "optimized"
+# Path to province data (TopoJSON format for smaller file sizes)
+PROVINCES_DIR = Path(__file__).parent.parent / "data" / "provinces" / "topojson"
 
 # Fallback in-memory cache for when Redis is not available
 _province_cache = {}
@@ -28,15 +28,15 @@ def _load_province_from_disk(month):
     if cache_key in _province_cache:
         return _province_cache[cache_key]
     
-    # Load from file
-    geojson_file = PROVINCES_DIR / f"provinces_month_{month:02d}.geojson"
+    # Load from file (TopoJSON format)
+    topojson_file = PROVINCES_DIR / f"provinces_month_{month:02d}.topojson"
     
-    if not geojson_file.exists():
-        print(f"Province data not found for month {month}: {geojson_file}")
+    if not topojson_file.exists():
+        print(f"Province data not found for month {month}: {topojson_file}")
         return None
     
     try:
-        with open(geojson_file, 'r', encoding='utf-8') as f:
+        with open(topojson_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
         # Cache it in memory as fallback
@@ -182,8 +182,8 @@ def get_available_months():
     
     available = []
     for month in range(1, 13):
-        geojson_file = PROVINCES_DIR / f"provinces_month_{month:02d}.geojson"
-        if geojson_file.exists():
+        topojson_file = PROVINCES_DIR / f"provinces_month_{month:02d}.topojson"
+        if topojson_file.exists():
             available.append(month)
     
     return available

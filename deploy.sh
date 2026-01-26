@@ -23,6 +23,15 @@ echo "📦 Installing/updating dependencies..."
 pip install -r requirements-server.txt
 echo ""
 
+# Minify static assets
+echo "📦 Minifying static assets (JS/CSS)..."
+if python scripts/minify_assets.py; then
+    echo "✅ Assets minified successfully"
+else
+    echo "⚠️  Asset minification failed (check if rjsmin and cssmin are installed)"
+fi
+echo ""
+
 # Warm Redis cache (if Redis is available)
 echo "🔥 Warming Redis cache..."
 if python scripts/warm_cache.py; then

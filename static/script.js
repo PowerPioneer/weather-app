@@ -1672,30 +1672,112 @@ function formatCriteriaIcons(result) {
 }
 
 /**
+ * Convert TopoJSON to GeoJSON using topojson-client library
+ * @param {object} topojsonData - TopoJSON data from server
+ * @param {string} objectName - Name of the object to extract (e.g., 'countries', 'provinces')
+ * @returns {object} GeoJSON FeatureCollection
+ */
+function topoJsonToGeoJson(topojsonData, objectName) {
+    if (!window.topojson) {
+        console.error('TopoJSON client library not loaded');
+        return null;
+    }
+    
+    // Find the object name in the TopoJSON
+    const objectKeys = Object.keys(topojsonData.objects || {});
+    
+    // Try to find the requested object, fall back to first available
+    let targetObject = objectName;
+    if (!topojsonData.objects || !topojsonData.objects[targetObject]) {
+        // Object name not found, use first available key
+        targetObject = objectKeys[0];
+        console.log(`Object "${objectName}" not found, using "${targetObject}" instead`);
+    }
+    
+    if (!targetObject || !topojsonData.objects[targetObject]) {
+        console.error(`No objects found in TopoJSON. Available: ${objectKeys.join(', ')}`);
+        return null;
+    }
+    
+    // Convert to GeoJSON
+    const geojson = topojson.feature(topojsonData, topojsonData.objects[targetObject]);
+    return geojson;
+}
+
+/**
+ * Filter GeoJSON features by bounding box (client-side filtering)
+ * @param {object} geojsonData - GeoJSON FeatureCollection
+ * @param {object} bounds - Viewport bounds {north, south, east, west}
+ * @returns {object} Filtered GeoJSON FeatureCollection
+ */
+function filterByBoundsClient(geojsonData, bounds) {
+    if (!bounds || !geojsonData || !geojsonData.features) {
+        return geojsonData;
+    }
+    
+    const { north, south, east, west } = bounds;
+    const crossesAntimeridian = west > east;
+    
+    const filteredFeatures = geojsonData.features.filter(feature => {
+        if (!feature.geometry || !feature.geometry.coordinates) return false;
+        
+        // Get coordinates based on geometry type
+        let coordsToCheck = [];
+        const geom = feature.geometry;
+        
+        if (geom.type === 'Polygon') {
+            coordsToCheck = geom.coordinates[0]; // Outer ring
+        } else if (geom.type === 'MultiPolygon') {
+            // Check first point of each polygon
+            coordsToCheck = geom.coordinates.map(poly => poly[0][0]);
+        } else {
+            return true; // Include other geometry types
+        }
+        
+        // Check if any coordinate is in bounds
+        return coordsToCheck.some(coord => {
+            const lon = coord[0];
+            const lat = coord[1];
+            
+            const latInBounds = lat >= south && lat <= north;
+            const lonInBounds = crossesAntimeridian 
+                ? (lon >= west || lon <= east)
+                : (lon >= west && lon <= east);
+            
+            return latInBounds && lonInBounds;
+        });
+    });
+    
+    return {
+        type: 'FeatureCollection',
+        features: filteredFeatures
+    };
+}
+
+/**
  * Fetch combined data for all 4 variables (temperature, rainfall, sunshine, overall) in one request.
  * Uses the combined endpoint to reduce API calls from 4 to 1.
+ * Server returns TopoJSON format (~60% smaller), converted to GeoJSON client-side.
  * 
  * @param {number} month - Month number (1-12)
  * @param {string} layerType - 'countries' or 'provinces'
- * @param {object} bounds - Optional viewport bounds {north, south, east, west}
+ * @param {object} bounds - Optional viewport bounds {north, south, east, west} for client-side filtering
  * @returns {object|null} Combined GeoJSON data with all variables, or null if error
  */
 async function fetchCombinedData(month, layerType, bounds = null) {
     const cacheKey = `${month}-${layerType}`;
     
-    // Only use cache for global (unbounded) data
-    // Province data with bounds should not be cached as viewport changes
-    if (!bounds && state.combinedDataCache[cacheKey]) {
+    // Check cache first (stores converted GeoJSON)
+    if (state.combinedDataCache[cacheKey]) {
         console.log(`Using cached combined data for ${layerType} month ${month}`);
-        return state.combinedDataCache[cacheKey];
+        const cachedData = state.combinedDataCache[cacheKey];
+        // Apply bounds filtering if needed
+        return bounds ? filterByBoundsClient(cachedData, bounds) : cachedData;
     }
     
     try {
-        // Build URL with optional bounds
+        // Build URL (no bounds param since filtering is client-side)
         let url = `/api/combined?month=${month}&layer=${layerType}`;
-        if (bounds) {
-            url += `&north=${bounds.north}&south=${bounds.south}&east=${bounds.east}&west=${bounds.west}`;
-        }
         
         const finalUrl = addCacheBuster(url);
         console.log(`Fetching combined data: ${finalUrl}`);
@@ -1708,14 +1790,28 @@ async function fetchCombinedData(month, layerType, bounds = null) {
             return null;
         }
         
-        console.log(`✓ Combined data loaded: ${result.variables.length} variables, ${result.data.features.length} features`);
-        
-        // Only cache global (unbounded) data
-        if (!bounds) {
-            state.combinedDataCache[cacheKey] = result.data;
+        // Convert TopoJSON to GeoJSON if format is topojson
+        let geojsonData;
+        if (result.format === 'topojson') {
+            console.log('Converting TopoJSON to GeoJSON...');
+            geojsonData = topoJsonToGeoJson(result.data, layerType);
+            if (!geojsonData) {
+                console.error('Failed to convert TopoJSON to GeoJSON');
+                return null;
+            }
+            console.log(`✓ TopoJSON converted: ${geojsonData.features.length} features`);
+        } else {
+            // Legacy GeoJSON format
+            geojsonData = result.data;
         }
         
-        return result.data;
+        console.log(`✓ Combined data loaded: ${result.variables.length} variables, ${geojsonData.features.length} features`);
+        
+        // Cache the converted GeoJSON (not filtered)
+        state.combinedDataCache[cacheKey] = geojsonData;
+        
+        // Apply bounds filtering if needed
+        return bounds ? filterByBoundsClient(geojsonData, bounds) : geojsonData;
     } catch (error) {
         console.error('Error fetching combined data:', error);
         return null;
@@ -1748,12 +1844,30 @@ async function createCountryOverlay() {
             window.PRELOADED_COUNTRY_DATA.month === month && 
             window.PRELOADED_COUNTRY_DATA.data) {
             console.log('Using preloaded country data from HTML');
-            geojsonData = window.PRELOADED_COUNTRY_DATA.data;
+            const preloadedData = window.PRELOADED_COUNTRY_DATA.data;
+            
+            // Check if preloaded data is TopoJSON (has 'objects' and 'arcs' properties)
+            if (preloadedData.objects && preloadedData.arcs) {
+                console.log('Preloaded data is TopoJSON, converting...');
+                geojsonData = topoJsonToGeoJson(preloadedData, 'countries');
+                if (!geojsonData) {
+                    console.error('Failed to convert preloaded TopoJSON');
+                    geojsonData = null;
+                } else {
+                    console.log(`✓ Preloaded TopoJSON converted: ${geojsonData.features.length} features`);
+                    // Cache the converted GeoJSON
+                    state.combinedDataCache[`${month}-countries`] = geojsonData;
+                }
+            } else {
+                // Legacy GeoJSON format
+                geojsonData = preloadedData;
+            }
+            
             // Clear preloaded data after use to free memory
             window.PRELOADED_COUNTRY_DATA = null;
         } else {
             // For countries, load all data without bounds filtering
-            // Country data is small enough (~1.5MB) that filtering isn't necessary
+            // Country data is small enough (~640KB TopoJSON) that filtering isn't necessary
             // and this avoids issues with international date line wrapping
             geojsonData = await fetchCombinedData(month, 'countries', null);
             

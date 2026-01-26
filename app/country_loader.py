@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from app.cache import get_cached_geojson, geojson_country_key
 
-# Path to country data (optimized for web serving)
-COUNTRIES_DIR = Path(__file__).parent.parent / "data" / "countries" / "optimized"
+# Path to country data (TopoJSON format for smaller file sizes)
+COUNTRIES_DIR = Path(__file__).parent.parent / "data" / "countries" / "topojson"
 
 # Fallback in-memory cache for when Redis is not available
 _country_cache = {}
@@ -27,15 +27,15 @@ def _load_country_from_disk(month):
     if cache_key in _country_cache:
         return _country_cache[cache_key]
     
-    # Load from file
-    geojson_file = COUNTRIES_DIR / f"countries_month_{month:02d}.geojson"
+    # Load from file (TopoJSON format)
+    topojson_file = COUNTRIES_DIR / f"countries_month_{month:02d}.topojson"
     
-    if not geojson_file.exists():
-        print(f"Country data not found for month {month}: {geojson_file}")
+    if not topojson_file.exists():
+        print(f"Country data not found for month {month}: {topojson_file}")
         return None
     
     try:
-        with open(geojson_file, 'r', encoding='utf-8') as f:
+        with open(topojson_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
         # Cache it in memory as fallback
@@ -181,8 +181,8 @@ def get_available_months():
     
     available = []
     for month in range(1, 13):
-        geojson_file = COUNTRIES_DIR / f"countries_month_{month:02d}.geojson"
-        if geojson_file.exists():
+        topojson_file = COUNTRIES_DIR / f"countries_month_{month:02d}.topojson"
+        if topojson_file.exists():
             available.append(month)
     
     return available

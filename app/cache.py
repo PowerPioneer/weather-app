@@ -214,7 +214,7 @@ def cache_decorator(key_func, timeout=604800):
 
 def warm_cache_with_geojson(data_path, data_type='country'):
     """
-    Pre-populate Redis cache with all GeoJSON files.
+    Pre-populate Redis cache with all TopoJSON files.
     
     Args:
         data_path: Path to data directory
@@ -230,11 +230,12 @@ def warm_cache_with_geojson(data_path, data_type='country'):
         return 0
     
     # Determine directory name with proper pluralization
+    # Now using TopoJSON format for smaller file sizes
     dir_name = 'countries' if data_type.lower() == 'country' else 'provinces'
-    aggregated_dir = Path(data_path) / dir_name / 'optimized'
+    topojson_dir = Path(data_path) / dir_name / 'topojson'
     
-    if not aggregated_dir.exists():
-        print(f"Directory not found: {aggregated_dir}")
+    if not topojson_dir.exists():
+        print(f"Directory not found: {topojson_dir}")
         return 0
     
     cached_count = 0
@@ -242,10 +243,10 @@ def warm_cache_with_geojson(data_path, data_type='country'):
     # Load all monthly files
     for month in range(1, 13):
         if data_type == 'country':
-            file_path = aggregated_dir / f"countries_month_{month:02d}.geojson"
+            file_path = topojson_dir / f"countries_month_{month:02d}.topojson"
             cache_key = geojson_country_key(month)
         else:
-            file_path = aggregated_dir / f"provinces_month_{month:02d}.geojson"
+            file_path = topojson_dir / f"provinces_month_{month:02d}.topojson"
             cache_key = geojson_province_key(month)
         
         if file_path.exists():
