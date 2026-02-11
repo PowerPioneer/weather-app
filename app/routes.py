@@ -21,11 +21,10 @@ def get_canonical_url():
     Returns:
         Canonical URL string with https and without www
     """
-    # Get the full URL
-    url = request.url
-    
-    # Replace www. with nothing and ensure https
-    canonical = url.replace('http://', 'https://').replace('www.', '')
+    # Always use HTTPS and remove www
+    # Use request.path to get the path, and construct the canonical URL explicitly
+    path = request.path
+    canonical = f'https://wheretogogreatweather.com{path}'
     
     return canonical
 
