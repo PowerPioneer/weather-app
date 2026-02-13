@@ -14,6 +14,25 @@ api_bp = Blueprint('api', __name__, url_prefix='/api')
 # __file__ is in app/routes.py, so parent is app/, and we need to go to app/static/data/
 DATA_FILE = Path(__file__).parent / "static" / "data" / "era5_stats.json"
 
+def get_asset_version():
+    """Generate a cache-busting version from current static asset mtimes."""
+    static_dir = Path(__file__).parent.parent / "static"
+    asset_paths = [
+        static_dir / "script.min.js",
+        static_dir / "style.min.css"
+    ]
+
+    mtimes = []
+    for asset_path in asset_paths:
+        if asset_path.exists():
+            mtimes.append(int(asset_path.stat().st_mtime))
+
+    if mtimes:
+        return str(max(mtimes))
+
+    # Fallback for unexpected missing files
+    return "1"
+
 def get_canonical_url():
     """
     Generate the canonical URL for the current page (non-www version).
@@ -101,6 +120,7 @@ def index():
     response = make_response(render_template('index.html', 
                          current_month=current_month,
                          initial_country_data=initial_data_json,
+                         asset_version=get_asset_version(),
                          canonical_url=get_canonical_url()))
     # Cache for 1 hour (dynamic content with current month)
     response.headers['Cache-Control'] = 'public, max-age=3600'

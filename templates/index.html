@@ -212,7 +212,7 @@
     <!-- Main CSS - load asynchronously after critical CSS -->
     <link
       rel="preload"
-      href="{{ url_for('static', filename='style.min.css') }}?v=20260126"
+      href="{{ url_for('static', filename='style.min.css') }}?v={{ asset_version }}"
       as="style"
       onload="
         this.onload = null;
@@ -222,7 +222,7 @@
     <noscript
       ><link
         rel="stylesheet"
-        href="{{ url_for('static', filename='style.min.css') }}?v=20260126"
+        href="{{ url_for('static', filename='style.min.css') }}?v={{ asset_version }}"
     /></noscript>
   </head>
   <body>
@@ -718,7 +718,7 @@
 
     <script
       defer
-      src="{{ url_for('static', filename='script.min.js') }}?v=20260126b"
+      src="{{ url_for('static', filename='script.min.js') }}?v={{ asset_version }}"
     ></script>
   </body>
 </html>
