@@ -207,8 +207,11 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initializeMap() {
     try {
-        // Detect if device is mobile
-        const isMobile = window.matchMedia('(max-width: 768px)').matches || ('ontouchstart' in window);
+        // Detect if device should use mobile-style interactions
+        const hasCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+        const hasNoHover = window.matchMedia('(hover: none)').matches;
+        const isNarrowViewport = window.matchMedia('(max-width: 768px)').matches;
+        const isMobile = hasCoarsePointer || hasNoHover || isNarrowViewport;
         
         // Set zoom level based on device - mobile needs wider view
         const initialZoom = isMobile ? 2 : 3;
@@ -216,8 +219,8 @@ function initializeMap() {
         // Create map centered on world view with mobile-specific options
         state.map = L.map('map', {
             zoomControl: !isMobile,  // Disable zoom controls on mobile
-            dragging: !isMobile,      // Disable single-finger drag on mobile
-            touchZoom: true,          // Enable two-finger pinch zoom
+            dragging: true,           // Allow single-finger drag on touch devices
+            touchZoom: true,          // Keep two-finger pinch zoom enabled
             tap: true,                // Enable tap events
             tapTolerance: 15,         // Tap tolerance in pixels
             scrollWheelZoom: true,    // Enable scroll wheel zoom

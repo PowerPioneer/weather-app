@@ -8,7 +8,7 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    touch-action: none; /* Prevent all touch gestures including pinch zoom */
+    touch-action: pan-x pan-y;
     overflow: hidden;
     position: fixed;
     width: 100%;
@@ -24,7 +24,7 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    touch-action: none; /* Prevent touch zoom on app container */
+    touch-action: auto;
 }
 
 header {
@@ -38,7 +38,7 @@ header {
     right: 0;
     z-index: 1001;
     min-height: fit-content;
-    touch-action: none; /* Prevent touch zoom on header */
+    touch-action: manipulation;
 }
 
 .header-content {
@@ -220,7 +220,7 @@ main {
     background: #f5f9f8;
     position: relative;
     z-index: 1;
-    touch-action: manipulation; /* Allow map to handle touch events */
+    touch-action: pan-x pan-y pinch-zoom;
 }
 
 /* Climate Preferences Sidebar (left side, collapsible) */
