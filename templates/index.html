@@ -627,15 +627,18 @@
         <div
           class="ad-container-bottom"
           style="
-            position: absolute;
+            position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             z-index: 2000;
             text-align: center;
-            background: rgba(255, 255, 255, 0.7);
-            max-height: 100px;
-            overflow: hidden;
+            background: rgba(255, 255, 255, 0.9);
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
           "
         >
           <script
@@ -646,15 +649,25 @@
           <!-- Horizontal bottom -->
           <ins
             class="adsbygoogle"
-            style="display: block"
+            style="display: inline-block; width: 728px; height: 90px"
             data-ad-client="ca-pub-2423510297813794"
             data-ad-slot="7458078684"
-            data-ad-format="horizontal"
-            data-full-width-responsive="true"
+            data-full-width-responsive="false"
           ></ins>
           <script>
             (adsbygoogle = window.adsbygoogle || []).push({});
           </script>
+          <style>
+            @media (max-width: 768px) {
+              .ad-container-bottom {
+                height: 60px !important;
+              }
+              .ad-container-bottom ins.adsbygoogle {
+                width: 320px !important;
+                height: 50px !important;
+              }
+            }
+          </style>
         </div>
       </main>
     </div>
