@@ -2,6 +2,23 @@
 
 ## Map Controls Redesign (13 Feb 2026)
 
+## Mobile Popup + Ad Layering Fix (13 Feb 2026)
+
+### Plan
+
+- [x] Keep map control popups pinned under header on mobile and above legend/weather overlays
+- [x] Ensure popup scroll area ends above bottom ad so bottom controls stay reachable
+- [x] Lock mobile ad rendering to small horizontal banner dimensions
+- [x] Rebuild minified assets
+
+### Review (13 Feb 2026)
+
+- Increased popup stacking priority so control panels render over legend and other overlays while open
+- Made mobile popup background fully opaque and removed blur to prevent darkened appearance
+- Bound mobile popup bottom to a bottom-ad height variable (+ safe-area inset) so content remains scrollable above the ad
+- Hardened ad unit attributes/CSS to keep mobile ad as a fixed 320x50 horizontal banner
+- Rebuilt production assets (`static/script.min.js`, `static/style.min.css`)
+
 ### Plan
 
 - [x] Replace legacy sidebar/toggle controls with a 3-button map control stack (Month, Display Mode, Personal Preferences) for both desktop and mobile

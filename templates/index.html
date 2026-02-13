@@ -530,7 +530,7 @@
           </div>
 
           <!-- Legend overlay (top center) -->
-          <div class="legend-overlay">
+          <div class="legend-overlay" style="z-index: 1050 !important;">
             <div id="legend-content-horizontal">
               <div class="legend-item">
                 <span style="font-weight: 600">My Preferences:</span>
@@ -648,6 +648,8 @@
             style="display: inline-block; width: 728px; height: 90px"
             data-ad-client="ca-pub-2423510297813794"
             data-ad-slot="7458078684"
+            data-ad-format="horizontal"
+            data-full-width-responsive="false"
           ></ins>
 
           <script>
@@ -667,9 +669,17 @@
               .ad-container-bottom ins.adsbygoogle {
                 width: 320px !important;
                 height: 50px !important;
+                min-width: 320px !important;
+                max-width: 320px !important;
+                min-height: 50px !important;
+                max-height: 50px !important;
               }
               .ad-container-bottom iframe {
+                width: 320px !important;
                 height: 50px !important;
+                min-width: 320px !important;
+                max-width: 320px !important;
+                min-height: 50px !important;
                 max-height: 50px !important;
               }
             }

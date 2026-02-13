@@ -4,6 +4,10 @@
     box-sizing: border-box;
 }
 
+:root {
+    --bottom-ad-height: 90px;
+}
+
 html, body {
     height: 100%;
     margin: 0;
@@ -298,6 +302,7 @@ main {
     backdrop-filter: blur(10px);
     padding: 0.75rem;
     position: relative;
+    z-index: 1103;
 }
 
 .map-control-panel.open {
@@ -656,14 +661,14 @@ main {
 /* Legend Overlay (top center) */
 .legend-overlay {
     position: fixed;
-    top: calc(var(--header-height, 100px) + 32px);
+    top: calc(var(--header-height, 100px) + 40px);
     left: 50%;
     transform: translateX(-50%);
     background: rgba(255, 255, 255, 0.95);
     padding: 0.65rem 1.5rem;
     border-radius: 25px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-    z-index: 10004;
+    z-index: 1050;
     backdrop-filter: blur(10px);
     display: block !important;
     visibility: visible !important;
@@ -936,6 +941,10 @@ svg path {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    :root {
+        --bottom-ad-height: 60px;
+    }
+
     /* Header adjustments */
     header {
         padding: 1rem 1.5rem;
@@ -1006,7 +1015,7 @@ svg path {
     
     /* Keep legend clearly visible */
     .legend-overlay {
-        z-index: 10003;
+        z-index: 1050;
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
@@ -1029,7 +1038,8 @@ svg path {
 
     .map-controls-backdrop.active {
         display: block;
-        z-index: 10001;
+        z-index: 10004;
+        background: transparent;
     }
 
     .map-control-panel {
@@ -1037,13 +1047,17 @@ svg path {
         top: calc(var(--header-height, 80px) + 8px);
         left: 8px;
         right: 8px;
-        bottom: 60px;
+        bottom: calc(var(--bottom-ad-height, 60px) + env(safe-area-inset-bottom, 0px) + 8px);
         width: auto;
         max-height: none;
         border-radius: 12px;
-        z-index: 10002;
+        z-index: 10005 !important;
         padding-top: 2.25rem;
-        padding-bottom: 1rem;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+        background: #ffffff;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     }
 
     .map-control-close-btn {
@@ -1145,7 +1159,7 @@ svg path {
         transform: translateX(-50%);
         max-width: calc(100vw - 20px);
         padding: 0.75rem;
-        z-index: 10003;
+        z-index: 1050 !important;
     }
     
     #legend-content-horizontal {
