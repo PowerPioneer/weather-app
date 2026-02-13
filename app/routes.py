@@ -149,6 +149,13 @@ def ads_txt():
     static_folder = Path(__file__).parent.parent / 'static'
     return send_from_directory(static_folder, 'ads.txt', mimetype='text/plain')
 
+@main_bp.route('/robots.txt')
+def robots_txt():
+    """Serve robots.txt file."""
+    from flask import send_from_directory
+    static_folder = Path(__file__).parent.parent / 'static'
+    return send_from_directory(static_folder, 'robots.txt', mimetype='text/plain')
+
 @main_bp.route('/favicon.ico')
 def favicon():
     """Serve the logo as favicon."""

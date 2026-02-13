@@ -1,352 +1,722 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <meta name="description" content="Plan your trip with perfect weather! Interactive map shows best destinations by month. Combines sunshine, rainfall, temperature data & official travel advisories.">
-    <link rel="canonical" href="{{ canonical_url }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
+    />
+    <meta
+      name="description"
+      content="Plan your trip with perfect weather! Interactive map shows best destinations by month. Combines sunshine, rainfall, temperature data & official travel advisories."
+    />
+    <link rel="canonical" href="{{ canonical_url }}" />
     <title>Where to Go for Great Weather</title>
-    
+
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='Great weather - logo.png') }}">
-    
+    <link
+      rel="icon"
+      type="image/png"
+      href="{{ url_for('static', filename='Great weather - logo.png') }}"
+    />
+
     <!-- Preconnect to external domains for faster resource loading -->
-    <link rel="preconnect" href="https://unpkg.com">
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://a.tile.openstreetmap.org" crossorigin>
-    <link rel="preconnect" href="https://b.tile.openstreetmap.org" crossorigin>
-    <link rel="preconnect" href="https://c.tile.openstreetmap.org" crossorigin>
-    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
-    <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com">
-    
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link
+      rel="preconnect"
+      href="https://a.tile.openstreetmap.org"
+      crossorigin
+    />
+    <link
+      rel="preconnect"
+      href="https://b.tile.openstreetmap.org"
+      crossorigin
+    />
+    <link
+      rel="preconnect"
+      href="https://c.tile.openstreetmap.org"
+      crossorigin
+    />
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+    <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
+
     <!-- Preload LCP map tiles for faster initial render (zoom level 2 for mobile) -->
-    <link rel="preload" href="https://a.tile.openstreetmap.org/2/1/1.png" as="image" fetchpriority="high">
-    <link rel="preload" href="https://b.tile.openstreetmap.org/2/2/1.png" as="image">
-    <link rel="preload" href="https://c.tile.openstreetmap.org/2/1/0.png" as="image">
-    <link rel="preload" href="https://a.tile.openstreetmap.org/2/2/0.png" as="image">
-    
+    <link
+      rel="preload"
+      href="https://a.tile.openstreetmap.org/2/1/1.png"
+      as="image"
+      fetchpriority="high"
+    />
+    <link
+      rel="preload"
+      href="https://b.tile.openstreetmap.org/2/2/1.png"
+      as="image"
+    />
+    <link
+      rel="preload"
+      href="https://c.tile.openstreetmap.org/2/1/0.png"
+      as="image"
+    />
+    <link
+      rel="preload"
+      href="https://a.tile.openstreetmap.org/2/2/0.png"
+      as="image"
+    />
+
     <!-- Preload critical resources for LCP optimization -->
-    <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" as="script" crossorigin="anonymous">
-    
+    <link
+      rel="preload"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      as="script"
+      crossorigin="anonymous"
+    />
+
     <!-- Critical CSS - inline for immediate rendering -->
     <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        html,body{height:100%;width:100%;margin:0;padding:0;overflow:hidden;position:fixed;background-color:#aadaff}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#2c3e3b}
-        #app{height:100%;width:100%;display:flex;flex-direction:column;position:relative}
-        header{background:linear-gradient(135deg,#2d4f4c 0%,#3a615c 100%);color:#fff;padding:1.25rem 2rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);position:fixed;top:0;left:0;right:0;z-index:1001;width:100%}
-        .header-content{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;max-width:100%;gap:2rem}
-        .header-left{display:flex;align-items:center;gap:0.75rem;justify-self:start}
-        .header-center{display:flex;flex-direction:column;gap:0.25rem;align-items:center;justify-self:center}
-        header h1{font-size:1.75rem;margin:0}
-        header p{font-size:0.95rem;opacity:0.9;margin:0}
-        main{padding:0;position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;overflow:hidden;padding-top:100px}
-        .map-container-fullscreen{position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:1}
-        .map{width:100%;height:100%;min-height:600px;position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;background-color:#aadaff}
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        position: fixed;
+        background-color: #aadaff;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #2c3e3b;
+      }
+      #app {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+      header {
+        background: linear-gradient(135deg, #2d4f4c 0%, #3a615c 100%);
+        color: #fff;
+        padding: 1.25rem 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1001;
+        width: 100%;
+      }
+      .header-content {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        max-width: 100%;
+        gap: 2rem;
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        justify-self: start;
+      }
+      .header-center {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        align-items: center;
+        justify-self: center;
+      }
+      header h1 {
+        font-size: 1.75rem;
+        margin: 0;
+      }
+      header p {
+        font-size: 0.95rem;
+        opacity: 0.9;
+        margin: 0;
+      }
+      main {
+        padding: 0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        padding-top: 100px;
+      }
+      .map-container-fullscreen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+      .map {
+        width: 100%;
+        height: 100%;
+        min-height: 600px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+        background-color: #aadaff;
+      }
     </style>
-    
+
     <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-P5SWCPR7');</script>
+    <script>
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != "dataLayer" ? "&l=" + l : "";
+        j.async = true;
+        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, "script", "dataLayer", "GTM-P5SWCPR7");
+    </script>
     <!-- End Google Tag Manager -->
-    
+
     <!-- Leaflet CSS - load asynchronously to avoid render blocking -->
-    <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
-    
+    <link
+      rel="preload"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      as="style"
+      onload="
+        this.onload = null;
+        this.rel = 'stylesheet';
+      "
+    />
+    <noscript
+      ><link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    /></noscript>
+
     <!-- Main CSS - load asynchronously after critical CSS -->
-    <link rel="preload" href="{{ url_for('static', filename='style.min.css') }}?v=20260126" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="{{ url_for('static', filename='style.min.css') }}?v=20260126"></noscript>
-</head>
-<body>
+    <link
+      rel="preload"
+      href="{{ url_for('static', filename='style.min.css') }}?v=20260126"
+      as="style"
+      onload="
+        this.onload = null;
+        this.rel = 'stylesheet';
+      "
+    />
+    <noscript
+      ><link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.min.css') }}?v=20260126"
+    /></noscript>
+  </head>
+  <body>
     <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P5SWCPR7"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <noscript
+      ><iframe
+        src="https://www.googletagmanager.com/ns.html?id=GTM-P5SWCPR7"
+        height="0"
+        width="0"
+        style="display: none; visibility: hidden"
+      ></iframe
+    ></noscript>
     <!-- End Google Tag Manager (noscript) -->
     <div id="app">
-        <header>
-            <div class="header-content">
-                <div class="header-left">
-                    <label for="monthSelect" class="month-label">Month:</label>
-                    <select id="monthSelect" class="month-select">
-                        <option value="1">January</option>
-                        <option value="2">February</option>
-                        <option value="3">March</option>
-                        <option value="4">April</option>
-                        <option value="5">May</option>
-                        <option value="6" selected>June</option>
-                        <option value="7">July</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">October</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
-                    </select>
-                </div>
-                <div class="header-center">
-                    <h1>Where to Go for Great Weather</h1>
-                    <p>Life's too short for bad weather</p>
-                </div>
-                <div class="header-right">
-                    <button class="hamburger-menu" id="hamburgerMenu" aria-label="Menu">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
-                    <nav class="dropdown-menu" id="dropdownMenu">
-                        <a href="/about" class="dropdown-link">About</a>
-                        <a href="/privacy" class="dropdown-link">Privacy Policy</a>
-                        <a href="/terms" class="dropdown-link">Terms of Service</a>
-                        <a href="/cookies" class="dropdown-link">Cookie Policy</a>
-                    </nav>
-                </div>
-            </div>
-        </header>
+      <header>
+        <div class="header-content">
+          <div class="header-left">
+            <label for="monthSelect" class="month-label">Month:</label>
+            <select id="monthSelect" class="month-select">
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6" selected>June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+          <div class="header-center">
+            <h1>Where to Go for Great Weather</h1>
+            <p>Life's too short for bad weather</p>
+          </div>
+          <div class="header-right">
+            <button class="hamburger-menu" id="hamburgerMenu" aria-label="Menu">
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+            <nav class="dropdown-menu" id="dropdownMenu">
+              <a href="/about" class="dropdown-link">About</a>
+              <a href="/privacy" class="dropdown-link">Privacy Policy</a>
+              <a href="/terms" class="dropdown-link">Terms of Service</a>
+              <a href="/cookies" class="dropdown-link">Cookie Policy</a>
+            </nav>
+          </div>
+        </div>
+      </header>
 
-        <main>
-            <div class="map-container-fullscreen">
-                <div id="map" class="map" style="min-height: 600px;"></div>
-                
-                <!-- Transparent overlay for preferences panel backdrop -->
-                <div class="preferences-overlay" id="preferencesOverlay"></div>
-                
-                <!-- Mobile Toggle Button (outside sidebar) -->
-                <button class="preferences-toggle mobile-toggle" id="preferencesToggle">
-                    <span class="toggle-icon">▶</span>
-                    <span class="toggle-text">Climate Preferences</span>
+      <main>
+        <div class="map-container-fullscreen">
+          <div id="map" class="map" style="min-height: 600px"></div>
+
+          <!-- Transparent overlay for preferences panel backdrop -->
+          <div class="preferences-overlay" id="preferencesOverlay"></div>
+
+          <!-- Mobile Toggle Button (outside sidebar) -->
+          <button
+            class="preferences-toggle mobile-toggle"
+            id="preferencesToggle"
+          >
+            <span class="toggle-icon">▶</span>
+            <span class="toggle-text">Climate Preferences</span>
+          </button>
+
+          <!-- Climate Preferences Sidebar (left side, collapsible) -->
+          <div class="climate-preferences-sidebar collapsed">
+            <button
+              class="close-btn preferences-close-btn"
+              id="preferencesCloseBtn"
+            >
+              &times;
+            </button>
+
+            <!-- Desktop toggle button (inside sidebar) -->
+            <button class="preferences-toggle desktop-toggle">
+              <span class="toggle-icon">☰</span>
+              <span class="toggle-text">Climate Preferences</span>
+            </button>
+
+            <div class="preferences-content" id="preferencesContent">
+              <!-- Mobile Month Selector (hidden on desktop) -->
+              <div class="mobile-month-selector" style="display: none">
+                <label for="mobileMonthSelect">Month:</label>
+                <select id="mobileMonthSelect" class="month-select">
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6" selected>June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+
+              <!-- Display Mode Selector -->
+              <div class="display-mode-section">
+                <h2>Display Mode</h2>
+                <div class="mode-buttons">
+                  <button
+                    class="mode-btn mode-btn-overall active"
+                    data-mode="overall"
+                  >
+                    My Preferences
+                  </button>
+                  <button class="mode-btn" data-mode="temperature">
+                    <span class="icon">🌡️</span> Temp
+                  </button>
+                  <button class="mode-btn" data-mode="rainfall">
+                    <span class="icon">🌧️</span> Rain
+                  </button>
+                  <button class="mode-btn" data-mode="safety">
+                    <span class="icon">⚠️</span> Safety
+                  </button>
+                  <button class="mode-btn" data-mode="sunshine">
+                    <span class="icon">☀️</span> Sun
+                  </button>
+                </div>
+              </div>
+
+              <!-- Temperature Range -->
+              <div class="preference-section">
+                <h3>Temperature: <span id="tempRange">18°C - 28°C</span></h3>
+                <div class="dual-slider temp-slider">
+                  <input
+                    type="range"
+                    id="tempMin"
+                    class="temp-min-slider"
+                    min="-20"
+                    max="50"
+                    value="18"
+                    step="1"
+                    aria-label="Minimum temperature"
+                  />
+                  <input
+                    type="range"
+                    id="tempMax"
+                    class="temp-max-slider"
+                    min="-20"
+                    max="50"
+                    value="28"
+                    step="1"
+                    aria-label="Maximum temperature"
+                  />
+                  <div class="slider-track"></div>
+                  <span class="temp-label temp-min-label">min</span>
+                  <span class="temp-label temp-max-label">max</span>
+                </div>
+              </div>
+
+              <!-- Rainfall Range -->
+              <div class="preference-section">
+                <h3>
+                  Rainfall: <span id="rainRange">0 - 3 mm/day</span>
+                  <button
+                    class="info-btn"
+                    id="rainfallInfoBtn"
+                    aria-label="Rainfall information"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 14 14"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle
+                        cx="7"
+                        cy="7"
+                        r="6.5"
+                        stroke="currentColor"
+                        stroke-width="1"
+                      />
+                      <text
+                        x="7"
+                        y="10.5"
+                        font-size="10"
+                        font-weight="bold"
+                        text-anchor="middle"
+                        fill="currentColor"
+                      >
+                        i
+                      </text>
+                    </svg>
+                  </button>
+                  <div class="info-tooltip" id="rainfallInfoTooltip">
+                    <div class="info-tooltip-content">
+                      <strong>Rainfall Guide:</strong>
+                      <ul>
+                        <li><strong>0-1 mm/day:</strong> Dry / Desert-like</li>
+                        <li><strong>1-3 mm/day:</strong> Light rain</li>
+                        <li><strong>3-5 mm/day:</strong> Moderate rain</li>
+                        <li><strong>5-10 mm/day:</strong> Rainy</li>
+                        <li><strong>10+ mm/day:</strong> Very wet / Monsoon</li>
+                      </ul>
+                    </div>
+                  </div>
+                </h3>
+                <div class="dual-slider">
+                  <input
+                    type="range"
+                    id="rainMin"
+                    min="0"
+                    max="20"
+                    value="0"
+                    step="0.5"
+                    aria-label="Minimum rainfall"
+                  />
+                  <input
+                    type="range"
+                    id="rainMax"
+                    min="0"
+                    max="20"
+                    value="3"
+                    step="0.5"
+                    aria-label="Maximum rainfall"
+                  />
+                  <div class="slider-track"></div>
+                </div>
+              </div>
+
+              <!-- Sunshine Range -->
+              <div class="preference-section">
+                <h3>Sunshine: <span id="sunRange">6 - 12 h/day</span></h3>
+                <div class="dual-slider">
+                  <input
+                    type="range"
+                    id="sunMin"
+                    min="0"
+                    max="15"
+                    value="6"
+                    step="0.5"
+                    aria-label="Minimum sunshine hours"
+                  />
+                  <input
+                    type="range"
+                    id="sunMax"
+                    min="0"
+                    max="15"
+                    value="12"
+                    step="0.5"
+                    aria-label="Maximum sunshine hours"
+                  />
+                  <div class="slider-track"></div>
+                </div>
+              </div>
+
+              <!-- Safety Level Selector -->
+              <div class="preference-section">
+                <h3>
+                  Acceptable safety level: <span id="safetyLevel">Caution</span>
+                </h3>
+                <input
+                  type="range"
+                  id="safetySlider"
+                  class="safety-slider"
+                  min="1"
+                  max="4"
+                  value="2"
+                  step="1"
+                  aria-label="Maximum acceptable travel safety level"
+                />
+                <div class="safety-labels">
+                  <span>Normal</span>
+                  <span>Caution</span>
+                  <span>Reconsider</span>
+                  <span>Do Not Travel</span>
+                </div>
+              </div>
+
+              <!-- Temperature Unit Selector -->
+              <div class="preference-section">
+                <h3>Temperature Unit</h3>
+                <div class="temp-unit-buttons-sidebar">
+                  <button class="temp-unit-btn active" data-unit="C">°C</button>
+                  <button class="temp-unit-btn" data-unit="F">°F</button>
+                </div>
+              </div>
+
+              <!-- Clear Cache Button -->
+              <div class="preference-section">
+                <button
+                  class="clear-cache-btn"
+                  id="clearCacheBtn"
+                  title="Force reload all data by clearing browser cache"
+                >
+                  <span class="icon">🔄</span> Clear Cache
                 </button>
-                
-                <!-- Climate Preferences Sidebar (left side, collapsible) -->
-                <div class="climate-preferences-sidebar collapsed">
-                    <button class="close-btn preferences-close-btn" id="preferencesCloseBtn">&times;</button>
-                    
-                    <!-- Desktop toggle button (inside sidebar) -->
-                    <button class="preferences-toggle desktop-toggle">
-                        <span class="toggle-icon">☰</span>
-                        <span class="toggle-text">Climate Preferences</span>
-                    </button>
-                    
-                    <div class="preferences-content" id="preferencesContent">
-                        <!-- Mobile Month Selector (hidden on desktop) -->
-                        <div class="mobile-month-selector" style="display: none;">
-                            <label for="mobileMonthSelect">Month:</label>
-                            <select id="mobileMonthSelect" class="month-select">
-                                <option value="1">January</option>
-                                <option value="2">February</option>
-                                <option value="3">March</option>
-                                <option value="4">April</option>
-                                <option value="5">May</option>
-                                <option value="6" selected>June</option>
-                                <option value="7">July</option>
-                                <option value="8">August</option>
-                                <option value="9">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Display Mode Selector -->
-                        <div class="display-mode-section">
-                            <h2>Display Mode</h2>
-                            <div class="mode-buttons">
-                                <button class="mode-btn mode-btn-overall active" data-mode="overall">
-                                    My Preferences
-                                </button>
-                                <button class="mode-btn" data-mode="temperature">
-                                    <span class="icon">🌡️</span> Temp
-                                </button>
-                                <button class="mode-btn" data-mode="rainfall">
-                                    <span class="icon">🌧️</span> Rain
-                                </button>
-                                <button class="mode-btn" data-mode="safety">
-                                    <span class="icon">⚠️</span> Safety
-                                </button>
-                                <button class="mode-btn" data-mode="sunshine">
-                                    <span class="icon">☀️</span> Sun
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Temperature Range -->
-                        <div class="preference-section">
-                            <h3>Temperature: <span id="tempRange">18°C - 28°C</span></h3>
-                            <div class="dual-slider temp-slider">
-                                <input type="range" id="tempMin" class="temp-min-slider" min="-20" max="50" value="18" step="1" aria-label="Minimum temperature">
-                                <input type="range" id="tempMax" class="temp-max-slider" min="-20" max="50" value="28" step="1" aria-label="Maximum temperature">
-                                <div class="slider-track"></div>
-                                <span class="temp-label temp-min-label">min</span>
-                                <span class="temp-label temp-max-label">max</span>
-                            </div>
-                        </div>
-
-                        <!-- Rainfall Range -->
-                        <div class="preference-section">
-                            <h3>Rainfall: <span id="rainRange">0 - 3 mm/day</span>
-                                <button class="info-btn" id="rainfallInfoBtn" aria-label="Rainfall information">
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <circle cx="7" cy="7" r="6.5" stroke="currentColor" stroke-width="1"/>
-                                        <text x="7" y="10.5" font-size="10" font-weight="bold" text-anchor="middle" fill="currentColor">i</text>
-                                    </svg>
-                                </button>
-                                <div class="info-tooltip" id="rainfallInfoTooltip">
-                                    <div class="info-tooltip-content">
-                                        <strong>Rainfall Guide:</strong>
-                                        <ul>
-                                            <li><strong>0-1 mm/day:</strong> Dry / Desert-like</li>
-                                            <li><strong>1-3 mm/day:</strong> Light rain</li>
-                                            <li><strong>3-5 mm/day:</strong> Moderate rain</li>
-                                            <li><strong>5-10 mm/day:</strong> Rainy</li>
-                                            <li><strong>10+ mm/day:</strong> Very wet / Monsoon</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </h3>
-                            <div class="dual-slider">
-                                <input type="range" id="rainMin" min="0" max="20" value="0" step="0.5" aria-label="Minimum rainfall">
-                                <input type="range" id="rainMax" min="0" max="20" value="3" step="0.5" aria-label="Maximum rainfall">
-                                <div class="slider-track"></div>
-                            </div>
-                        </div>
-
-                        <!-- Sunshine Range -->
-                        <div class="preference-section">
-                            <h3>Sunshine: <span id="sunRange">6 - 12 h/day</span></h3>
-                        <div class="dual-slider">
-                            <input type="range" id="sunMin" min="0" max="15" value="6" step="0.5" aria-label="Minimum sunshine hours">
-                            <input type="range" id="sunMax" min="0" max="15" value="12" step="0.5" aria-label="Maximum sunshine hours">
-                            <div class="slider-track"></div>
-                        </div>
-                    </div>
-                    
-                        <!-- Safety Level Selector -->
-                        <div class="preference-section">
-                            <h3>Acceptable safety level: <span id="safetyLevel">Caution</span></h3>
-                            <input type="range" id="safetySlider" class="safety-slider" min="1" max="4" value="2" step="1" aria-label="Maximum acceptable travel safety level">
-                            <div class="safety-labels">
-                                <span>Normal</span>
-                                <span>Caution</span>
-                                <span>Reconsider</span>
-                                <span>Do Not Travel</span>
-                            </div>
-                        </div>
-                    
-                        <!-- Temperature Unit Selector -->
-                        <div class="preference-section">
-                            <h3>Temperature Unit</h3>
-                            <div class="temp-unit-buttons-sidebar">
-                                <button class="temp-unit-btn active" data-unit="C">°C</button>
-                                <button class="temp-unit-btn" data-unit="F">°F</button>
-                            </div>
-                        </div>
-                        
-                        <!-- Clear Cache Button -->
-                        <div class="preference-section">
-                            <button class="clear-cache-btn" id="clearCacheBtn" title="Force reload all data by clearing browser cache">
-                                <span class="icon">🔄</span> Clear Cache
-                            </button>
-                            <div class="cache-status" id="cacheStatus" style="display: none;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Legend overlay (top center) -->
-                <div class="legend-overlay">
-                    <div id="legend-content-horizontal">
-                        <div class="legend-item">
-                            <span style="font-weight: 600;">My Preferences:</span>
-                            <div class="legend-colors">
-                                <span class="legend-color" style="background: #4ade80;">Good</span>
-                                <span class="legend-color" style="background: #fb923c;">Moderate</span>
-                                <span class="legend-color" style="background: #fbbf24;">Partial</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Info message overlay (bottom center) -->
-                <div class="info-message-overlay">
-                    Click on a spot on the map to see local climate information
-                </div>
-                
-                <!-- Weather details overlay (right side) - Desktop only -->
-                <div class="weather-details-overlay" id="weatherDetailsPanelOverlay" style="display: none;">
-                    <button class="close-btn" onclick="document.getElementById('weatherDetailsPanelOverlay').style.display='none'">&times;</button>
-                    <h2>Climate Information</h2>
-                    <div id="locationInfoOverlay" style="margin-bottom: 1rem;">
-                        <div id="locationDetailsOverlay" style="margin-top: 0.5rem; font-size: 0.9rem;">
-                            <p><strong>Country:</strong> <span class="country-name">-</span></p>
-                            <p><strong>Region:</strong> <span class="region-name">-</span></p>
-                        </div>
-                    </div>
-                    <div class="weather-info">
-                        <p>Loading weather information...</p>
-                    </div>
-                </div>
+                <div
+                  class="cache-status"
+                  id="cacheStatus"
+                  style="display: none"
+                ></div>
+              </div>
             </div>
-            
-            <!-- Weather details section (below map) - Mobile only -->
-            <section class="weather-details-section" id="weatherDetailsPanelSection" style="display: none;">
-                <button class="close-btn" onclick="document.getElementById('weatherDetailsPanelSection').style.display='none'">&times;</button>
-                <h2>Climate Information</h2>
-                <div id="locationInfoSection" style="margin-bottom: 1rem;">
-                    <div id="locationDetailsSection" style="margin-top: 0.5rem; font-size: 0.9rem;">
-                        <p><strong>Country:</strong> <span class="country-name">-</span></p>
-                        <p><strong>Region:</strong> <span class="region-name">-</span></p>
-                    </div>
+          </div>
+
+          <!-- Legend overlay (top center) -->
+          <div class="legend-overlay">
+            <div id="legend-content-horizontal">
+              <div class="legend-item">
+                <span style="font-weight: 600">My Preferences:</span>
+                <div class="legend-colors">
+                  <span class="legend-color" style="background: #4ade80"
+                    >Good</span
+                  >
+                  <span class="legend-color" style="background: #fb923c"
+                    >Moderate</span
+                  >
+                  <span class="legend-color" style="background: #fbbf24"
+                    >Partial</span
+                  >
                 </div>
-                <div class="weather-info">
-                    <p>Loading weather information...</p>
-                </div>
-            </section>
-        </main>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info message overlay (bottom center) -->
+          <div class="info-message-overlay">
+            Click on a spot on the map to see local climate information
+          </div>
+
+          <!-- Weather details overlay (right side) - Desktop only -->
+          <div
+            class="weather-details-overlay"
+            id="weatherDetailsPanelOverlay"
+            style="display: none"
+          >
+            <button
+              class="close-btn"
+              onclick="
+                document.getElementById(
+                  'weatherDetailsPanelOverlay',
+                ).style.display = 'none'
+              "
+            >
+              &times;
+            </button>
+            <h2>Climate Information</h2>
+            <div id="locationInfoOverlay" style="margin-bottom: 1rem">
+              <div
+                id="locationDetailsOverlay"
+                style="margin-top: 0.5rem; font-size: 0.9rem"
+              >
+                <p>
+                  <strong>Country:</strong> <span class="country-name">-</span>
+                </p>
+                <p>
+                  <strong>Region:</strong> <span class="region-name">-</span>
+                </p>
+              </div>
+            </div>
+            <div class="weather-info">
+              <p>Loading weather information...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weather details section (below map) - Mobile only -->
+        <section
+          class="weather-details-section"
+          id="weatherDetailsPanelSection"
+          style="display: none"
+        >
+          <button
+            class="close-btn"
+            onclick="
+              document.getElementById(
+                'weatherDetailsPanelSection',
+              ).style.display = 'none'
+            "
+          >
+            &times;
+          </button>
+          <h2>Climate Information</h2>
+          <div id="locationInfoSection" style="margin-bottom: 1rem">
+            <div
+              id="locationDetailsSection"
+              style="margin-top: 0.5rem; font-size: 0.9rem"
+            >
+              <p>
+                <strong>Country:</strong> <span class="country-name">-</span>
+              </p>
+              <p><strong>Region:</strong> <span class="region-name">-</span></p>
+            </div>
+          </div>
+          <div class="weather-info">
+            <p>Loading weather information...</p>
+          </div>
+        </section>
+
+        <!-- Google AdSense - Horizontal Bottom Ad -->
+        <div
+          class="ad-container-bottom"
+          style="
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.7);
+          "
+        >
+          <script
+            async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2423510297813794"
+            crossorigin="anonymous"
+          ></script>
+          <!-- Horizontal bottom -->
+          <ins
+            class="adsbygoogle"
+            style="display: block"
+            data-ad-client="ca-pub-2423510297813794"
+            data-ad-slot="7458078684"
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          ></ins>
+          <script>
+            (adsbygoogle = window.adsbygoogle || []).push({});
+          </script>
+        </div>
+      </main>
     </div>
 
     <!-- Cookie banner placeholder to reduce Cumulative Layout Shift (CLS) -->
-    <div id="cookie-banner-placeholder" style="height: 0; transition: height 0.3s ease;"></div>
+    <div
+      id="cookie-banner-placeholder"
+      style="height: 0; transition: height 0.3s ease"
+    ></div>
     <script>
-        // Reserve space for Enzuzo cookie banner when it appears
-        window.addEventListener('load', function() {
-            // Check if Enzuzo banner exists and adjust placeholder
-            setTimeout(function() {
-                var enzuzoBanner = document.querySelector('[data-enzuzo-cookie-bar]') || 
-                                 document.querySelector('.enzuzo-cookie-bar') ||
-                                 document.getElementById('enzuzo-cookie-bar');
-                if (enzuzoBanner) {
-                    // Banner is showing, remove placeholder
-                    var placeholder = document.getElementById('cookie-banner-placeholder');
-                    if (placeholder) placeholder.style.display = 'none';
-                }
-            }, 100);
-        });
+      // Reserve space for Enzuzo cookie banner when it appears
+      window.addEventListener("load", function () {
+        // Check if Enzuzo banner exists and adjust placeholder
+        setTimeout(function () {
+          var enzuzoBanner =
+            document.querySelector("[data-enzuzo-cookie-bar]") ||
+            document.querySelector(".enzuzo-cookie-bar") ||
+            document.getElementById("enzuzo-cookie-bar");
+          if (enzuzoBanner) {
+            // Banner is showing, remove placeholder
+            var placeholder = document.getElementById(
+              "cookie-banner-placeholder",
+            );
+            if (placeholder) placeholder.style.display = "none";
+          }
+        }, 100);
+      });
     </script>
 
     <!-- Leaflet JS - defer to avoid render blocking -->
-    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
-    
+    <script
+      defer
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      crossorigin="anonymous"
+    ></script>
+
     <!-- TopoJSON Client - for converting TopoJSON to GeoJSON (reduces payload ~60%) -->
-    <script defer src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js" crossorigin="anonymous"></script>
-    
+    <script
+      defer
+      src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"
+      crossorigin="anonymous"
+    ></script>
+
     <!-- Chart.js - lazy load only when needed (when user clicks a location) -->
     <script>
-        window.loadChartJS = function() {
-            return new Promise((resolve, reject) => {
-                if (window.Chart) {
-                    resolve(window.Chart);
-                    return;
-                }
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js';
-                script.onload = () => resolve(window.Chart);
-                script.onerror = reject;
-                document.head.appendChild(script);
-            });
-        };
+      window.loadChartJS = function () {
+        return new Promise((resolve, reject) => {
+          if (window.Chart) {
+            resolve(window.Chart);
+            return;
+          }
+          const script = document.createElement("script");
+          script.src =
+            "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js";
+          script.onload = () => resolve(window.Chart);
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      };
     </script>
-    
-    <script defer src="{{ url_for('static', filename='script.min.js') }}?v=20260126b"></script>
-</body>
+
+    <script
+      defer
+      src="{{ url_for('static', filename='script.min.js') }}?v=20260126b"
+    ></script>
+  </body>
 </html>

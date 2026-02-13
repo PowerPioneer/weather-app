@@ -1,5 +1,18 @@
 # Where to go for great weather - Bug Fixes
 
+## Cache Warming Deploy Check (11 Feb 2026)
+
+### Plan
+- [x] Confirm deploy.sh currently performs cache warming via scripts/warm_cache.py
+- [x] If missing or incomplete, add a deploy step to warm the cache
+- [x] Update review section with the outcome and any changes made
+
+### Review (11 Feb 2026)
+- deploy.sh already warms cache via scripts/warm_cache.py inside a guarded block; no changes needed
+- Warming step is non-blocking under set -e (wrapped in conditional), so deploy flow is safe if Redis is down
+- No code changes required; plan closed
+
+
 ## Console Errors Investigation - NIEUWE FIX (26 Jan 2026)
 
 ### Problem
