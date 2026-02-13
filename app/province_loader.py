@@ -4,7 +4,6 @@ This provides pre-computed province averages as an alternative to grid-based dat
 """
 import json
 from pathlib import Path
-import geopandas as gpd
 from app.cache import get_cached_geojson, geojson_province_key
 
 # Path to province data (TopoJSON format for smaller file sizes)

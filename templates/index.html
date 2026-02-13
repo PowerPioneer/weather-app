@@ -239,23 +239,6 @@
     <div id="app">
       <header>
         <div class="header-content">
-          <div class="header-left">
-            <label for="monthSelect" class="month-label">Month:</label>
-            <select id="monthSelect" class="month-select">
-              <option value="1">January</option>
-              <option value="2">February</option>
-              <option value="3">March</option>
-              <option value="4">April</option>
-              <option value="5">May</option>
-              <option value="6" selected>June</option>
-              <option value="7">July</option>
-              <option value="8">August</option>
-              <option value="9">September</option>
-              <option value="10">October</option>
-              <option value="11">November</option>
-              <option value="12">December</option>
-            </select>
-          </div>
           <div class="header-center">
             <h1>Where to Go for Great Weather</h1>
             <p>Life's too short for bad weather</p>
@@ -280,55 +263,72 @@
         <div class="map-container-fullscreen">
           <div id="map" class="map" style="min-height: 600px"></div>
 
-          <!-- Transparent overlay for preferences panel backdrop -->
-          <div class="preferences-overlay" id="preferencesOverlay"></div>
+          <div class="map-controls-backdrop" id="mapControlsBackdrop"></div>
+          <div class="map-controls-overlay" id="mapControlsOverlay">
+            <div class="map-control-buttons">
+              <button
+                class="map-control-btn"
+                id="monthControlBtn"
+                data-panel="month"
+                aria-label="Select month"
+              >
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                  <rect x="5" y="7" width="22" height="20" rx="4"></rect>
+                  <path d="M10 4v6M22 4v6M5 12h22"></path>
+                  <circle cx="16" cy="18" r="4.5"></circle>
+                  <path d="M19.2 21.2L23 25"></path>
+                </svg>
+              </button>
+              <button
+                class="map-control-btn"
+                id="displayModeControlBtn"
+                data-panel="display"
+                aria-label="Select display mode"
+              >
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                  <rect x="6" y="8" width="20" height="4" rx="2"></rect>
+                  <rect x="6" y="14" width="20" height="4" rx="2"></rect>
+                  <rect x="6" y="20" width="20" height="4" rx="2"></rect>
+                </svg>
+              </button>
+              <button
+                class="map-control-btn"
+                id="preferencesControlBtn"
+                data-panel="preferences"
+                aria-label="Select personal preferences"
+              >
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                  <path d="M5 9h22M5 16h22M5 23h22"></path>
+                  <circle cx="11" cy="9" r="3"></circle>
+                  <circle cx="21" cy="16" r="3"></circle>
+                  <circle cx="14" cy="23" r="3"></circle>
+                </svg>
+              </button>
+            </div>
 
-          <!-- Mobile Toggle Button (outside sidebar) -->
-          <button
-            class="preferences-toggle mobile-toggle"
-            id="preferencesToggle"
-          >
-            <span class="toggle-icon">▶</span>
-            <span class="toggle-text">Climate Preferences</span>
-          </button>
+            <div class="map-control-panels">
+              <section class="map-control-panel" id="monthControlPanel" data-panel="month">
+                <button class="close-btn map-control-close-btn" aria-label="Close month selector">&times;</button>
+                <h2>Select Month</h2>
+                <div class="month-grid" id="monthGrid">
+                  <button class="month-grid-btn" data-month="1">Jan</button>
+                  <button class="month-grid-btn" data-month="2">Feb</button>
+                  <button class="month-grid-btn" data-month="3">Mar</button>
+                  <button class="month-grid-btn" data-month="4">Apr</button>
+                  <button class="month-grid-btn" data-month="5">May</button>
+                  <button class="month-grid-btn active" data-month="6">Jun</button>
+                  <button class="month-grid-btn" data-month="7">Jul</button>
+                  <button class="month-grid-btn" data-month="8">Aug</button>
+                  <button class="month-grid-btn" data-month="9">Sep</button>
+                  <button class="month-grid-btn" data-month="10">Oct</button>
+                  <button class="month-grid-btn" data-month="11">Nov</button>
+                  <button class="month-grid-btn" data-month="12">Dec</button>
+                </div>
+              </section>
 
-          <!-- Climate Preferences Sidebar (left side, collapsible) -->
-          <div class="climate-preferences-sidebar collapsed">
-            <button
-              class="close-btn preferences-close-btn"
-              id="preferencesCloseBtn"
-            >
-              &times;
-            </button>
-
-            <!-- Desktop toggle button (inside sidebar) -->
-            <button class="preferences-toggle desktop-toggle">
-              <span class="toggle-icon">☰</span>
-              <span class="toggle-text">Climate Preferences</span>
-            </button>
-
-            <div class="preferences-content" id="preferencesContent">
-              <!-- Mobile Month Selector (hidden on desktop) -->
-              <div class="mobile-month-selector" style="display: none">
-                <label for="mobileMonthSelect">Month:</label>
-                <select id="mobileMonthSelect" class="month-select">
-                  <option value="1">January</option>
-                  <option value="2">February</option>
-                  <option value="3">March</option>
-                  <option value="4">April</option>
-                  <option value="5">May</option>
-                  <option value="6" selected>June</option>
-                  <option value="7">July</option>
-                  <option value="8">August</option>
-                  <option value="9">September</option>
-                  <option value="10">October</option>
-                  <option value="11">November</option>
-                  <option value="12">December</option>
-                </select>
-              </div>
-
-              <!-- Display Mode Selector -->
-              <div class="display-mode-section">
+              <section class="map-control-panel" id="displayControlPanel" data-panel="display">
+                <button class="close-btn map-control-close-btn" aria-label="Close display mode selector">&times;</button>
+                <div class="display-mode-section">
                 <h2>Display Mode</h2>
                 <div class="mode-buttons">
                   <button
@@ -351,9 +351,12 @@
                   </button>
                 </div>
               </div>
+              </section>
 
-              <!-- Temperature Range -->
-              <div class="preference-section">
+              <section class="map-control-panel" id="preferencesControlPanel" data-panel="preferences">
+                <button class="close-btn map-control-close-btn" aria-label="Close preferences">&times;</button>
+                <h2>My Preferences</h2>
+                <div class="preference-section">
                 <h3>Temperature: <span id="tempRange">18°C - 28°C</span></h3>
                 <div class="dual-slider temp-slider">
                   <input
@@ -382,8 +385,7 @@
                 </div>
               </div>
 
-              <!-- Rainfall Range -->
-              <div class="preference-section">
+                <div class="preference-section">
                 <h3>
                   Rainfall: <span id="rainRange">0 - 3 mm/day</span>
                   <button
@@ -453,8 +455,7 @@
                 </div>
               </div>
 
-              <!-- Sunshine Range -->
-              <div class="preference-section">
+                <div class="preference-section">
                 <h3>Sunshine: <span id="sunRange">6 - 12 h/day</span></h3>
                 <div class="dual-slider">
                   <input
@@ -479,8 +480,7 @@
                 </div>
               </div>
 
-              <!-- Safety Level Selector -->
-              <div class="preference-section">
+                <div class="preference-section">
                 <h3>
                   Acceptable safety level: <span id="safetyLevel">Caution</span>
                 </h3>
@@ -502,8 +502,7 @@
                 </div>
               </div>
 
-              <!-- Temperature Unit Selector -->
-              <div class="preference-section">
+                <div class="preference-section">
                 <h3>Temperature Unit</h3>
                 <div class="temp-unit-buttons-sidebar">
                   <button class="temp-unit-btn active" data-unit="C">°C</button>
@@ -511,8 +510,7 @@
                 </div>
               </div>
 
-              <!-- Clear Cache Button -->
-              <div class="preference-section">
+                <div class="preference-section">
                 <button
                   class="clear-cache-btn"
                   id="clearCacheBtn"
@@ -525,6 +523,8 @@
                   id="cacheStatus"
                   style="display: none"
                 ></div>
+                </div>
+              </section>
               </div>
             </div>
           </div>
@@ -547,11 +547,6 @@
                 </div>
               </div>
             </div>
-          </div>
-
-          <!-- Info message overlay (bottom center) -->
-          <div class="info-message-overlay">
-            Click on a spot on the map to see local climate information
           </div>
 
           <!-- Weather details overlay (right side) - Desktop only -->

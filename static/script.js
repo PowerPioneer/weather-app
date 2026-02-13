@@ -176,6 +176,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize map
     initializeMap();
+
+    // Recalculate Leaflet viewport after layout settles (prevents blank map areas on mobile)
+    setTimeout(() => {
+        if (state.map) {
+            state.map.invalidateSize(true);
+        }
+    }, 150);
     
     console.log('6. Map object created:', state.map);
     
@@ -198,6 +205,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Recalculate header height on window resize
     window.addEventListener('resize', () => {
         setDynamicHeaderHeight();
+        if (state.map) {
+            state.map.invalidateSize(true);
+        }
         updateLegend(); // Update legend on resize to show/hide emoticons
     });
 });
@@ -391,24 +401,44 @@ function updateMapInfo() {
  * Initialize event listeners
  */
 function initializeEventListeners() {
-    const monthSelect = document.getElementById('monthSelect');
-    const mobileMonthSelect = document.getElementById('mobileMonthSelect');
+    const monthGridButtons = document.querySelectorAll('.month-grid-btn');
+    const controlButtons = document.querySelectorAll('.map-control-btn');
+    const controlPanels = document.querySelectorAll('.map-control-panel');
+    const mapControlsBackdrop = document.getElementById('mapControlsBackdrop');
+    const panelCloseButtons = document.querySelectorAll('.map-control-close-btn');
     
-    // Set both dropdowns to current month
-    monthSelect.value = state.selectedMonth;
-    if (mobileMonthSelect) {
-        mobileMonthSelect.value = state.selectedMonth;
+    function setActiveMonthButton(monthNum) {
+        monthGridButtons.forEach((button) => {
+            button.classList.toggle('active', parseInt(button.dataset.month) === monthNum);
+        });
+    }
+    
+    function closeControlPanels() {
+        controlButtons.forEach((button) => button.classList.remove('active'));
+        controlPanels.forEach((panel) => panel.classList.remove('open'));
+        if (mapControlsBackdrop) {
+            mapControlsBackdrop.classList.remove('active');
+        }
+        document.body.classList.remove('map-panel-open');
+    }
+    
+    function openControlPanel(panelName) {
+        controlButtons.forEach((button) => {
+            button.classList.toggle('active', button.dataset.panel === panelName);
+        });
+        controlPanels.forEach((panel) => {
+            panel.classList.toggle('open', panel.dataset.panel === panelName);
+        });
+        if (mapControlsBackdrop) {
+            mapControlsBackdrop.classList.add('active');
+        }
+        document.body.classList.add('map-panel-open');
     }
     
     // Function to handle month change
     function handleMonthChange(monthNum) {
         state.selectedMonth = monthNum;
-        
-        // Sync both selectors
-        monthSelect.value = monthNum;
-        if (mobileMonthSelect) {
-            mobileMonthSelect.value = monthNum;
-        }
+        setActiveMonthButton(monthNum);
         
         console.log('Month selected:', state.selectedMonth);
         
@@ -422,20 +452,58 @@ function initializeEventListeners() {
         
         updateMapLayers();
     }
+
+    setActiveMonthButton(state.selectedMonth);
     
-    // Month select dropdown (desktop)
-    monthSelect.addEventListener('change', function(e) {
-        const monthNum = parseInt(e.target.value);
-        handleMonthChange(monthNum);
-    });
-    
-    // Mobile month select dropdown
-    if (mobileMonthSelect) {
-        mobileMonthSelect.addEventListener('change', function(e) {
-            const monthNum = parseInt(e.target.value);
-            handleMonthChange(monthNum);
+    monthGridButtons.forEach((button) => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const monthNum = parseInt(this.dataset.month);
+            if (!Number.isNaN(monthNum)) {
+                handleMonthChange(monthNum);
+                closeControlPanels();
+            }
         });
+    });
+
+    controlButtons.forEach((button) => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const panelName = this.dataset.panel;
+            const targetPanel = document.querySelector(`.map-control-panel[data-panel="${panelName}"]`);
+            if (!targetPanel) return;
+
+            if (targetPanel.classList.contains('open')) {
+                closeControlPanels();
+            } else {
+                openControlPanel(panelName);
+            }
+        });
+    });
+
+    controlPanels.forEach((panel) => {
+        panel.addEventListener('click', (e) => e.stopPropagation());
+    });
+
+    panelCloseButtons.forEach((button) => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeControlPanels();
+        });
+    });
+
+    if (mapControlsBackdrop) {
+        mapControlsBackdrop.addEventListener('click', closeControlPanels);
     }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeControlPanels();
+        }
+    });
     
     // Display mode buttons
     const modeButtons = document.querySelectorAll('.mode-btn');
@@ -516,64 +584,6 @@ function initializeEventListeners() {
     updateRangeSlider('temp', tempMin, tempMax);
     updateRangeSlider('rain', rainMin, rainMax);
     updateRangeSlider('sun', sunMin, sunMax);
-    
-    // Preferences toggle with overlay
-    const preferencesToggleMobile = document.getElementById('preferencesToggle');
-    const preferencesToggleDesktop = document.querySelector('.desktop-toggle');
-    const preferencesSidebar = document.querySelector('.climate-preferences-sidebar');
-    const preferencesOverlay = document.getElementById('preferencesOverlay');
-    const preferencesCloseBtn = document.getElementById('preferencesCloseBtn');
-    
-    function openPreferences() {
-        preferencesSidebar.classList.remove('collapsed');
-        if (preferencesOverlay) {
-            preferencesOverlay.classList.add('active');
-        }
-    }
-    
-    function closePreferences() {
-        preferencesSidebar.classList.add('collapsed');
-        if (preferencesOverlay) {
-            preferencesOverlay.classList.remove('active');
-        }
-    }
-    
-    // Mobile toggle button
-    if (preferencesToggleMobile) {
-        preferencesToggleMobile.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (preferencesSidebar.classList.contains('collapsed')) {
-                openPreferences();
-            } else {
-                closePreferences();
-            }
-        });
-    }
-    
-    // Desktop toggle button
-    if (preferencesToggleDesktop) {
-        preferencesToggleDesktop.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (preferencesSidebar.classList.contains('collapsed')) {
-                openPreferences();
-            } else {
-                closePreferences();
-            }
-        });
-    }
-    
-    // Close preferences when clicking overlay
-    if (preferencesOverlay) {
-        preferencesOverlay.addEventListener('click', closePreferences);
-    }
-    
-    // Close preferences with close button
-    if (preferencesCloseBtn) {
-        preferencesCloseBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closePreferences();
-        });
-    }
     
     // Temperature unit toggle buttons
     const tempUnitButtons = document.querySelectorAll('.temp-unit-btn');
