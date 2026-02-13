@@ -632,13 +632,13 @@
             left: 0;
             right: 0;
             z-index: 2000;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.9);
-            height: 90px;
+            background: rgba(255, 255, 255, 0.95);
+            border-top: 1px solid #ddd;
             display: flex;
-            align-items: center;
             justify-content: center;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            align-items: center;
+            /* Default Desktop Height */
+            height: 90px;
           "
         >
           <script
@@ -646,25 +646,36 @@
             src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2423510297813794"
             crossorigin="anonymous"
           ></script>
-          <!-- Horizontal bottom -->
+
+          <!-- Explicitly Fixed Sized Ad Unit -->
           <ins
             class="adsbygoogle"
             style="display: inline-block; width: 728px; height: 90px"
             data-ad-client="ca-pub-2423510297813794"
             data-ad-slot="7458078684"
-            data-full-width-responsive="false"
           ></ins>
+
           <script>
             (adsbygoogle = window.adsbygoogle || []).push({});
           </script>
+
           <style>
+            /* Force Mobile Sizes with !important */
             @media (max-width: 768px) {
               .ad-container-bottom {
                 height: 60px !important;
+                min-height: 60px !important;
+                max-height: 60px !important;
+                overflow: hidden !important;
               }
+              /* Force the AdSense iframe to fit */
               .ad-container-bottom ins.adsbygoogle {
                 width: 320px !important;
                 height: 50px !important;
+              }
+              .ad-container-bottom iframe {
+                height: 50px !important;
+                max-height: 50px !important;
               }
             }
           </style>
