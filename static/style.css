@@ -1040,6 +1040,7 @@ svg path {
         display: block;
         z-index: 10004;
         background: transparent;
+        pointer-events: none;
     }
 
     .map-control-panel {
@@ -1058,6 +1059,8 @@ svg path {
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        pointer-events: auto;
+        touch-action: auto;
     }
 
     .map-control-close-btn {
@@ -1139,6 +1142,9 @@ svg path {
     .close-btn {
         min-height: 44px;
         min-width: 44px;
+        pointer-events: auto;
+        touch-action: manipulation;
+        cursor: pointer;
     }
     
     /* Slider thumbs - larger for touch */
@@ -1150,6 +1156,22 @@ svg path {
     input[type="range"]::-moz-range-thumb {
         width: 22px;
         height: 22px;
+    }
+    
+    /* Make sliders work properly on touch */
+    input[type="range"] {
+        touch-action: none;
+        pointer-events: auto;
+    }
+    
+    .dual-slider {
+        touch-action: none;
+        pointer-events: auto;
+    }
+    
+    .safety-slider {
+        touch-action: none;
+        pointer-events: auto;
     }
     
     /* Legend adjustments */
