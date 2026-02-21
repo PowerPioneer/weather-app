@@ -43,7 +43,7 @@ def get_canonical_url():
     # Always use HTTPS and remove www
     # Use request.path to get the path, and construct the canonical URL explicitly
     path = request.path
-    canonical = f'https://wheretogogreatweather.com{path}'
+    canonical = f'https://wheretogoforgreatweather.com{path}'
     
     return canonical
 
@@ -165,7 +165,7 @@ def cookies():
 @main_bp.route('/sitemap.xml')
 def sitemap():
     """Serve the XML sitemap for search engines."""
-    base = 'https://wheretogogreatweather.com'
+    base = 'https://wheretogoforgreatweather.com'
     pages = [
         ('/', '1.0', 'daily'),
         ('/about', '0.5', 'monthly'),
