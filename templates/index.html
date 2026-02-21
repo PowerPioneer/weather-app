@@ -669,8 +669,8 @@
               style="display:block"
               data-ad-client="ca-pub-2423510297813794"
               data-ad-slot="7458078684"
-              data-ad-format="auto"
-              data-full-width-responsive="true"
+              data-ad-format="horizontal"
+              data-full-width-responsive="false"
             ></ins>
             <script>
               (adsbygoogle = window.adsbygoogle || []).push({});
@@ -686,7 +686,7 @@
               // Update CSS variable so map panels adjust position
               document.documentElement.style.setProperty(
                 '--bottom-ad-height',
-                isCollapsed ? '4px' : (window.innerWidth <= 768 ? '250px' : '90px')
+                isCollapsed ? '4px' : (window.innerWidth <= 768 ? '280px' : '90px')
               );
             }
           </script>
@@ -694,13 +694,14 @@
           <style>
             .ad-content {
               width: 100%;
-              min-height: 90px;      /* Desktop: ruimte voor leaderboard */
+              max-height: 90px;      /* Desktop: begrenst tot leaderboard banner */
+              overflow: hidden;
               text-align: center;
             }
 
             @media (max-width: 767px) {
               .ad-content {
-                min-height: 250px;   /* Mobiel: ruimte voor medium rectangle */
+                max-height: 280px;   /* Mobiel: staat rectangle toe */
               }
             }
 
@@ -718,7 +719,7 @@
             @media (max-width: 768px) {
               .ad-container-bottom:not(.ad-collapsed) {
                 height: auto !important;
-                min-height: 250px !important;
+                min-height: 280px !important;
                 max-height: none !important;
                 overflow: visible !important;
               }
@@ -727,14 +728,14 @@
                 width: 100% !important;
                 height: auto !important;
                 max-width: 100% !important;
-                min-height: 250px !important;
+                min-height: 280px !important;
                 max-height: none !important;
               }
               .ad-container-bottom:not(.ad-collapsed) iframe {
                 width: 100% !important;
                 height: auto !important;
                 max-width: 100% !important;
-                min-height: 250px !important;
+                min-height: 280px !important;
                 max-height: none !important;
               }
             }
