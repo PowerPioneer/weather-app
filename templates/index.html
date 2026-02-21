@@ -610,6 +610,7 @@
         <!-- Google AdSense - Horizontal Bottom Ad -->
         <div
           class="ad-container-bottom"
+          id="adContainerBottom"
           style="
             position: fixed;
             bottom: 0;
@@ -623,46 +624,103 @@
             align-items: center;
             /* Default Desktop Height */
             height: 90px;
+            overflow: hidden;
+            transition: height 0.3s ease;
           "
         >
-          <script
-            async
-            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2423510297813794"
-            crossorigin="anonymous"
-          ></script>
+          <!-- Ad collapse/expand toggle -->
+          <button
+            id="adToggleBtn"
+            onclick="toggleAdContainer()"
+            style="
+              position: absolute;
+              top: -18px;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 36px;
+              height: 18px;
+              background: rgba(255, 255, 255, 0.95);
+              border: 1px solid #ddd;
+              border-bottom: none;
+              border-radius: 8px 8px 0 0;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 0;
+              z-index: 2001;
+              font-size: 10px;
+              color: #666;
+              line-height: 1;
+            "
+            aria-label="Toggle ad visibility"
+            title="Hide/show ad"
+          >▼</button>
 
-          <!-- Responsive Ad Unit -->
-          <ins
-            class="adsbygoogle"
-            style="display: block; width: 100%; height: 90px"
-            data-ad-client="ca-pub-2423510297813794"
-            data-ad-slot="7458078684"
-            data-ad-format="horizontal"
-            data-full-width-responsive="true"
-          ></ins>
+          <div class="ad-content" id="adContent">
+            <script
+              async
+              src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2423510297813794"
+              crossorigin="anonymous"
+            ></script>
+
+            <!-- Horizontal Banner Ad Unit -->
+            <ins
+              class="adsbygoogle"
+              style="display: block; width: 100%; height: 90px"
+              data-ad-client="ca-pub-2423510297813794"
+              data-ad-slot="7458078684"
+              data-ad-format="horizontal"
+              data-full-width-responsive="false"
+            ></ins>
+
+            <script>
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+          </div>
 
           <script>
-            (adsbygoogle = window.adsbygoogle || []).push({});
+            function toggleAdContainer() {
+              var container = document.getElementById('adContainerBottom');
+              var btn = document.getElementById('adToggleBtn');
+              var isCollapsed = container.classList.toggle('ad-collapsed');
+              btn.textContent = isCollapsed ? '▲' : '▼';
+              // Update CSS variable so map panels adjust position
+              document.documentElement.style.setProperty(
+                '--bottom-ad-height',
+                isCollapsed ? '4px' : (window.innerWidth <= 768 ? '60px' : '90px')
+              );
+            }
           </script>
 
           <style>
+            /* Collapsed ad state */
+            .ad-container-bottom.ad-collapsed {
+              height: 4px !important;
+              min-height: 4px !important;
+              max-height: 4px !important;
+              border-top: 1px solid #ddd;
+            }
+            .ad-container-bottom.ad-collapsed .ad-content {
+              display: none;
+            }
             /* Force Mobile Sizes with !important */
             @media (max-width: 768px) {
-              .ad-container-bottom {
+              .ad-container-bottom:not(.ad-collapsed) {
                 height: 60px !important;
                 min-height: 60px !important;
                 max-height: 60px !important;
                 overflow: hidden !important;
               }
               /* Let AdSense fill the width on mobile */
-              .ad-container-bottom ins.adsbygoogle {
+              .ad-container-bottom:not(.ad-collapsed) ins.adsbygoogle {
                 width: 100% !important;
                 height: 50px !important;
                 max-width: 100% !important;
                 min-height: 50px !important;
                 max-height: 50px !important;
               }
-              .ad-container-bottom iframe {
+              .ad-container-bottom:not(.ad-collapsed) iframe {
                 width: 100% !important;
                 height: 50px !important;
                 max-width: 100% !important;

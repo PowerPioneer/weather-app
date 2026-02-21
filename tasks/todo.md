@@ -1,5 +1,17 @@
 # Where to go for great weather - Bug Fixes
 
+## Map & Ad Fixes (21 Feb 2026)
+
+### Plan
+
+- [ ] 1. Fix map initial load half-page issue — Leaflet's `invalidateSize()` timeouts (150ms/600ms) zijn niet altijd betrouwbaar. Vervang door een `ResizeObserver` op het map element zodat `invalidateSize()` getriggerd wordt wanneer de container daadwerkelijk van grootte verandert.
+- [ ] 2. Fix ad container te groot — `data-full-width-responsive="true"` laat AdSense de ad uitbreiden buiten de container. Zet dit op `false` en houd `data-ad-format="horizontal"` aan. Voeg `overflow: hidden` toe aan de desktop container (al aanwezig op mobile).
+- [ ] 3. Voeg collapse/expand knop toe aan ad — Een kleine chevron/pijl-knop bovenop de ad container waarmee gebruikers de ad kunnen inklappen tot een dunne balk (~20px) en weer uitklappen. Dit past ook de map layout aan.
+- [ ] 4. Rebuild minified assets.
+- [ ] 5. Git commit en push.
+
+---
+
 ## Mobile UI Fixes (21 Feb 2026)
 
 ### Plan

@@ -177,17 +177,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize map
     initializeMap();
 
-    // Recalculate Leaflet viewport after layout settles (prevents blank map areas on mobile)
-    setTimeout(() => {
-        if (state.map) {
-            state.map.invalidateSize(true);
-        }
-    }, 150);
-    setTimeout(() => {
-        if (state.map) {
-            state.map.invalidateSize(true);
-        }
-    }, 600);
+    // Use ResizeObserver to reliably recalculate Leaflet viewport when container size changes
+    if (window.ResizeObserver) {
+        const mapResizeObserver = new ResizeObserver(() => {
+            if (state.map) {
+                state.map.invalidateSize(true);
+            }
+        });
+        mapResizeObserver.observe(mapElement);
+    } else {
+        // Fallback for older browsers
+        setTimeout(() => { if (state.map) state.map.invalidateSize(true); }, 150);
+        setTimeout(() => { if (state.map) state.map.invalidateSize(true); }, 600);
+    }
     
     console.log('6. Map object created:', state.map);
     
