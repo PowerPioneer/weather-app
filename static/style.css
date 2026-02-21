@@ -941,7 +941,7 @@ svg path {
 /* Responsive Design */
 @media (max-width: 768px) {
     :root {
-        --bottom-ad-height: 60px;
+        --bottom-ad-height: 250px;
     }
 
     /* Header adjustments */
@@ -1052,7 +1052,7 @@ svg path {
         top: calc(var(--header-height, 80px) + 8px);
         left: 8px;
         right: 8px;
-        bottom: calc(var(--bottom-ad-height, 60px) + env(safe-area-inset-bottom, 0px) + 16px);
+        bottom: calc(var(--bottom-ad-height, 250px) + env(safe-area-inset-bottom, 0px) + 16px);
         width: auto;
         max-height: none;
         border-radius: 12px;

@@ -41,6 +41,12 @@
     <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
     <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
 
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2423510297813794"
+      crossorigin="anonymous"
+    ></script>
+
     <!-- Preload LCP map tiles for faster initial render (zoom level 2 for mobile) -->
     <link
       rel="preload"
@@ -658,22 +664,14 @@
           >▼</button>
 
           <div class="ad-content" id="adContent">
-            <script
-              async
-              src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2423510297813794"
-              crossorigin="anonymous"
-            ></script>
-
-            <!-- Horizontal Banner Ad Unit -->
             <ins
               class="adsbygoogle"
-              style="display: block; width: 100%; height: 90px"
+              style="display:block"
               data-ad-client="ca-pub-2423510297813794"
               data-ad-slot="7458078684"
-              data-ad-format="horizontal"
-              data-full-width-responsive="false"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
             ></ins>
-
             <script>
               (adsbygoogle = window.adsbygoogle || []).push({});
             </script>
@@ -688,12 +686,24 @@
               // Update CSS variable so map panels adjust position
               document.documentElement.style.setProperty(
                 '--bottom-ad-height',
-                isCollapsed ? '4px' : (window.innerWidth <= 768 ? '60px' : '90px')
+                isCollapsed ? '4px' : (window.innerWidth <= 768 ? '250px' : '90px')
               );
             }
           </script>
 
           <style>
+            .ad-content {
+              width: 100%;
+              min-height: 90px;      /* Desktop: ruimte voor leaderboard */
+              text-align: center;
+            }
+
+            @media (max-width: 767px) {
+              .ad-content {
+                min-height: 250px;   /* Mobiel: ruimte voor medium rectangle */
+              }
+            }
+
             /* Collapsed ad state */
             .ad-container-bottom.ad-collapsed {
               height: 4px !important;
@@ -707,25 +717,25 @@
             /* Force Mobile Sizes with !important */
             @media (max-width: 768px) {
               .ad-container-bottom:not(.ad-collapsed) {
-                height: 60px !important;
-                min-height: 60px !important;
-                max-height: 60px !important;
-                overflow: hidden !important;
+                height: auto !important;
+                min-height: 250px !important;
+                max-height: none !important;
+                overflow: visible !important;
               }
               /* Let AdSense fill the width on mobile */
               .ad-container-bottom:not(.ad-collapsed) ins.adsbygoogle {
                 width: 100% !important;
-                height: 50px !important;
+                height: auto !important;
                 max-width: 100% !important;
-                min-height: 50px !important;
-                max-height: 50px !important;
+                min-height: 250px !important;
+                max-height: none !important;
               }
               .ad-container-bottom:not(.ad-collapsed) iframe {
                 width: 100% !important;
-                height: 50px !important;
+                height: auto !important;
                 max-width: 100% !important;
-                min-height: 50px !important;
-                max-height: 50px !important;
+                min-height: 250px !important;
+                max-height: none !important;
               }
             }
           </style>
