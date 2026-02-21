@@ -665,12 +665,9 @@
 
           <div class="ad-content" id="adContent">
             <ins
-              class="adsbygoogle"
-              style="display:block"
+              class="adsbygoogle weather-responsive-ad"
               data-ad-client="ca-pub-2423510297813794"
               data-ad-slot="7458078684"
-              data-ad-format="horizontal"
-              data-full-width-responsive="false"
             ></ins>
             <script>
               (adsbygoogle = window.adsbygoogle || []).push({});
@@ -694,14 +691,22 @@
           <style>
             .ad-content {
               width: 100%;
-              max-height: 90px;      /* Desktop: begrenst tot leaderboard banner */
+              height: 100%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
               overflow: hidden;
-              text-align: center;
             }
 
-            @media (max-width: 767px) {
-              .ad-content {
-                max-height: 280px;   /* Mobiel: staat rectangle toe */
+            .weather-responsive-ad {
+              display: inline-block;
+              width: 100%;
+              height: 90px;
+            }
+
+            @media (max-width: 768px) {
+              .weather-responsive-ad {
+                height: 250px; /* Standard mobile rectangle height */
               }
             }
 
@@ -718,25 +723,10 @@
             /* Force Mobile Sizes with !important */
             @media (max-width: 768px) {
               .ad-container-bottom:not(.ad-collapsed) {
-                height: auto !important;
+                height: 280px !important;
                 min-height: 280px !important;
-                max-height: none !important;
+                max-height: 280px !important;
                 overflow: visible !important;
-              }
-              /* Let AdSense fill the width on mobile */
-              .ad-container-bottom:not(.ad-collapsed) ins.adsbygoogle {
-                width: 100% !important;
-                height: auto !important;
-                max-width: 100% !important;
-                min-height: 280px !important;
-                max-height: none !important;
-              }
-              .ad-container-bottom:not(.ad-collapsed) iframe {
-                width: 100% !important;
-                height: auto !important;
-                max-width: 100% !important;
-                min-height: 280px !important;
-                max-height: none !important;
               }
             }
           </style>
