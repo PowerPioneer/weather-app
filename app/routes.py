@@ -162,6 +162,31 @@ def cookies():
     response.headers['Cache-Control'] = 'public, max-age=86400'
     return response
 
+@main_bp.route('/sitemap.xml')
+def sitemap():
+    """Serve the XML sitemap for search engines."""
+    base = 'https://wheretogogreatweather.com'
+    pages = [
+        ('/', '1.0', 'daily'),
+        ('/about', '0.5', 'monthly'),
+        ('/privacy', '0.3', 'monthly'),
+        ('/terms', '0.3', 'monthly'),
+        ('/cookies', '0.3', 'monthly'),
+    ]
+    xml_parts = ['<?xml version="1.0" encoding="UTF-8"?>',
+                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for path, priority, changefreq in pages:
+        xml_parts.append(f'  <url>'
+                         f'<loc>{base}{path}</loc>'
+                         f'<changefreq>{changefreq}</changefreq>'
+                         f'<priority>{priority}</priority>'
+                         f'</url>')
+    xml_parts.append('</urlset>')
+    response = make_response('\n'.join(xml_parts))
+    response.headers['Content-Type'] = 'application/xml'
+    response.headers['Cache-Control'] = 'public, max-age=86400'
+    return response
+
 @main_bp.route('/ads.txt')
 def ads_txt():
     """Serve ads.txt file from root directory for Google AdSense verification."""
