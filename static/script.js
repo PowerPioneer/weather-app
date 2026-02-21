@@ -2107,9 +2107,16 @@ async function createCountryOverlay() {
                 }
                 
                 // Bind popup
+                // autoPanPaddingTopLeft accounts for the fixed header on desktop
+                const headerH = document.querySelector('header')?.offsetHeight || 85;
                 layer.bindPopup(
                     popupContent,
-                    { closeButton: false, autoPan: false }
+                    {
+                        closeButton: false,
+                        autoPan: true,
+                        autoPanPaddingTopLeft: L.point(10, headerH + 10),
+                        autoPanPaddingBottomRight: L.point(10, 10)
+                    }
                 );
                 
                 // Add hover and click highlighting
