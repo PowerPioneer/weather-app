@@ -1,5 +1,24 @@
 # Where to go for great weather - Bug Fixes
 
+## Mobile UI Fixes (21 Feb 2026)
+
+### Plan
+
+- [x] 1. Fix hamburger dropdown menu opening incorrectly on mobile — "About" link is hidden above viewport. The dropdown has `overflow: hidden` which clips it. Need to ensure the dropdown opens fully below the hamburger button on mobile.
+- [x] 2. Fix map initial load showing at half screen on mobile — The inline `min-height: 600px` on the map div and the critical CSS `.map { min-height: 600px }` may conflict with the full-viewport layout, causing incorrect initial sizing.
+- [x] 3. Fix preferences panel extending behind bottom ad — The panel's `bottom` calculation uses `--bottom-ad-height` but the ad container might be taller than the CSS variable accounts for; also need to ensure panel is scrollable.
+- [x] 4. Fix month selection panel clipping the bottom row of buttons — The panel height calculation doesn't leave enough room for the 4×3 grid of month buttons on smaller screens.
+- [x] 5. Rebuild minified assets.
+
+### Review (21 Feb 2026)
+
+- **Dropdown menu (fix 1):** Added mobile-specific `.dropdown-menu` rule using `position: fixed; top: var(--header-height, 80px)` so menu reliably opens directly below the header instead of being clipped by the absolute positioning chain. Also removed `overflow: hidden` from the dropdown and bumped `z-index` to 1002.
+- **Map initial load (fix 2):** Removed `min-height: 600px` from both the inline style on the map `div` and the critical CSS in `index.html`. The flex layout + `invalidateSize()` now properly sizes the map to the full viewport.
+- **Preferences panel (fix 3):** Added explicit `overflow-y: auto` to the mobile `.map-control-panel` rule so content scrolls within the panel. Increased `padding-bottom` from `1rem` to `1.5rem` for additional breathing room above the ad.
+- **Month panel (fix 4):** Same `overflow-y: auto` and increased `padding-bottom` apply, ensuring the Dec row is no longer clipped.
+- **Ads:** The ad sizing is a CSS issue, not an AdSense settings issue. The container properly constrains the ad; the real problem was panels overlapping the ad space.
+- Rebuilt `static/script.min.js` and `static/style.min.css`.
+
 ## Map Controls Redesign (13 Feb 2026)
 
 ## Mobile Popup + Ad Layering Fix (13 Feb 2026)

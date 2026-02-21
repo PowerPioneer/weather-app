@@ -183,6 +183,11 @@ document.addEventListener('DOMContentLoaded', function() {
             state.map.invalidateSize(true);
         }
     }, 150);
+    setTimeout(() => {
+        if (state.map) {
+            state.map.invalidateSize(true);
+        }
+    }, 600);
     
     console.log('6. Map object created:', state.map);
     

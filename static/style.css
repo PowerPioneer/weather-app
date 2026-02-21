@@ -160,19 +160,18 @@ header p {
 
 /* Dropdown Menu */
 .dropdown-menu {
-    position: absolute;
-    top: calc(100% + 1rem);
-    right: 0;
+    position: fixed;
+    top: var(--header-height, 85px);
+    right: 1rem;
     background: white;
-    border-radius: 8px;
+    border-radius: 0 0 8px 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     min-width: 200px;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
     transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
-    z-index: 1000;
-    overflow: hidden;
+    z-index: 1060;
 }
 
 .dropdown-menu.active {
@@ -294,7 +293,7 @@ main {
 .map-control-panel {
     display: none;
     width: 320px;
-    max-height: calc(100vh - 240px);
+    max-height: calc(100vh - 300px);
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.98);
     border-radius: 12px;
@@ -661,7 +660,7 @@ main {
 /* Legend Overlay (top center) */
 .legend-overlay {
     position: fixed;
-    top: calc(var(--header-height, 100px) + 40px);
+    top: calc(var(--header-height, 100px) + 30px);
     left: 50%;
     transform: translateX(-50%);
     background: rgba(255, 255, 255, 0.95);
@@ -973,6 +972,11 @@ svg path {
         top: 1rem;
         right: 1.5rem;
     }
+
+    .dropdown-menu {
+        right: 1rem;
+        left: auto;
+    }
     
     .header-left {
         order: 2;
@@ -1048,19 +1052,22 @@ svg path {
         top: calc(var(--header-height, 80px) + 8px);
         left: 8px;
         right: 8px;
-        bottom: calc(var(--bottom-ad-height, 60px) + env(safe-area-inset-bottom, 0px) + 8px);
+        bottom: calc(var(--bottom-ad-height, 60px) + env(safe-area-inset-bottom, 0px) + 16px);
         width: auto;
         max-height: none;
         border-radius: 12px;
         z-index: 10005 !important;
         padding-top: 2.25rem;
-        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+        padding-bottom: 1.5rem;
         background: #ffffff;
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         pointer-events: auto;
-        touch-action: auto;
+        touch-action: pan-y;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
     }
 
     .map-control-close-btn {
@@ -1176,7 +1183,7 @@ svg path {
     
     /* Legend adjustments */
     .legend-overlay {
-        top: calc(var(--header-height, 80px) + 24px);
+        top: calc(var(--header-height, 80px) + 20px);
         left: 50%;
         transform: translateX(-50%);
         max-width: calc(100vw - 20px);
