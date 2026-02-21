@@ -3,6 +3,7 @@ import json
 import hashlib
 from pathlib import Path
 import os
+from datetime import datetime
 from app.data_loader import get_weather_for_location, get_grid_data
 from app.province_loader import get_province_data, get_province_data_for_variable, get_available_months
 from app.country_loader import get_country_data_for_variable, get_available_months as get_available_country_months
@@ -166,6 +167,7 @@ def cookies():
 def sitemap():
     """Serve the XML sitemap for search engines."""
     base = 'https://wheretogoforgreatweather.com'
+    lastmod = datetime.now().strftime('%Y-%m-%d')
     pages = [
         ('/', '1.0', 'daily'),
         ('/about', '0.5', 'monthly'),
@@ -176,11 +178,12 @@ def sitemap():
     xml_parts = ['<?xml version="1.0" encoding="UTF-8"?>',
                  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for path, priority, changefreq in pages:
-        xml_parts.append(f'  <url>'
-                         f'<loc>{base}{path}</loc>'
-                         f'<changefreq>{changefreq}</changefreq>'
-                         f'<priority>{priority}</priority>'
-                         f'</url>')
+        xml_parts.append(f'  <url>\n'
+                         f'    <loc>{base}{path}</loc>\n'
+                         f'    <lastmod>{lastmod}</lastmod>\n'
+                         f'    <changefreq>{changefreq}</changefreq>\n'
+                         f'    <priority>{priority}</priority>\n'
+                         f'  </url>')
     xml_parts.append('</urlset>')
     response = make_response('\n'.join(xml_parts))
     response.headers['Content-Type'] = 'application/xml'

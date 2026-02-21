@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="nl">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -10,6 +10,38 @@
       name="description"
       content="Plan your trip with perfect weather! Interactive map shows best destinations by month. Combines sunshine, rainfall, temperature data & official travel advisories."
     />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ canonical_url }}" />
+    <meta property="og:title" content="Where to Go for Great Weather" />
+    <meta property="og:description" content="Plan your trip with perfect weather! Interactive map shows best destinations by month. Combines sunshine, rainfall, temperature data & official travel advisories." />
+    <meta property="og:image" content="{{ url_for('static', filename='Great weather - logo.png', _external=True) }}" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Where to Go for Great Weather" />
+    <meta name="twitter:description" content="Plan your trip with perfect weather! Interactive map shows best destinations by month." />
+    <meta name="twitter:image" content="{{ url_for('static', filename='Great weather - logo.png', _external=True) }}" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Where to Go for Great Weather",
+      "url": "{{ canonical_url }}",
+      "description": "Interactive map showing the best travel destinations by month based on sunshine, rainfall, and temperature.",
+      "applicationCategory": "TravelApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
     <link rel="canonical" href="{{ canonical_url }}" />
     <title>Where to Go for Great Weather</title>
 
@@ -171,6 +203,17 @@
         z-index: 1;
         background-color: #aadaff;
       }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+      }
     </style>
 
     <!-- Google Tag Manager -->
@@ -221,6 +264,13 @@
     /></noscript>
   </head>
   <body>
+    <!-- SEO Hidden Text for Screen Readers and Search Engines -->
+    <div class="sr-only">
+      <h2>Find the Best Weather Destinations by Month</h2>
+      <p>Welcome to Where to Go for Great Weather, your ultimate interactive travel map. Discover the best places to travel in January, February, March, April, May, June, July, August, September, October, November, and December based on historical climate data.</p>
+      <p>Our tool combines global sunshine hours, rainfall, and temperature data from ERA5 with official travel advisories to help you plan the perfect vacation. Filter by your ideal weather conditions and find safe, sunny destinations worldwide.</p>
+    </div>
+
     <!-- Google Tag Manager (noscript) -->
     <noscript
       ><iframe
