@@ -203,10 +203,13 @@ document.addEventListener('DOMContentLoaded', function() {
     loadRegions();
     
     // Load initial country overlay after a short delay to ensure map is ready
-    setTimeout(() => {
+    setTimeout(async () => {
         console.log('7. Loading initial country overlay...');
         // Force country data on initial load
-        createCountryOverlay();
+        await createCountryOverlay();
+        // Prefetch province data in the background so the client cache is warm
+        // before the user zooms in — avoids the ~500ms download+convert delay
+        prefetchProvinceData(state.selectedMonth);
     }, 500);
     
     // Recalculate header height on window resize
@@ -1831,6 +1834,29 @@ function filterByBoundsClient(geojsonData, bounds) {
         type: 'FeatureCollection',
         features: filteredFeatures
     };
+}
+
+/**
+ * Prefetch province data for a given month into the client cache.
+ * Called after the country overlay loads so the data is ready when the user zooms in.
+ * Silent: never throws, never blocks rendering.
+ *
+ * @param {number} month - Month number (1-12)
+ */
+async function prefetchProvinceData(month) {
+    const cacheKey = `${month}-provinces`;
+    if (state.combinedDataCache[cacheKey]) {
+        // Already cached — nothing to do
+        return;
+    }
+    console.log(`Prefetching province data for month ${month} in background...`);
+    try {
+        await fetchCombinedData(month, 'provinces', null);
+        console.log(`✓ Province data for month ${month} prefetched and cached`);
+    } catch (e) {
+        // Non-fatal — the user will still get data on first zoom, just not instant
+        console.warn('Prefetch province data failed (non-fatal):', e);
+    }
 }
 
 /**

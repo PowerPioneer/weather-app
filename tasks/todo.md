@@ -1,5 +1,32 @@
 # Where to go for great weather - Bug Fixes
 
+## Province kaart laadtijd (21 Feb 2026)
+
+### Diagnose
+
+De server-side Redis cache is wel warm (provincidata wordt snel geserveerd), maar de **browser client-side cache** (`state.combinedDataCache`) begint leeg bij elke paginalading. Bij de eerste inzoom (zoom ≥ 5) moet de browser:
+
+1. De provincie TopoJSON downloaden (~500KB per maand)
+2. Converteren via een Web Worker (CPU-tijd)
+3. De kaartlaag renderen
+
+Dit veroorzaakt de merkbare vertraging. De oplossing: province data **prefetchen op de achtergrond** nadat de country overlay geladen is, zodat de clientcache al gevuld is vóór de gebruiker inzoomt.
+
+### Plan
+
+- [x] 1. Voeg `prefetchProvinceData(month)` toe in `script.js` — roept `fetchCombinedData(month, 'provinces', null)` aan zonder iets te renderen (vult alleen de client cache).
+- [x] 2. Roep `prefetchProvinceData` aan vanuit de initialisatie, nadat `createCountryOverlay()` klaar is.
+- [x] 3. Rebuild minified assets.
+
+### Review
+
+- **`prefetchProvinceData(month)`** toegevoegd in `static/script.js` (vóór `fetchCombinedData`). Roept `fetchCombinedData(month, 'provinces', null)` aan op de achtergrond, slaat het resultaat op in `state.combinedDataCache`, en logt het resultaat. Falen is altijd non-fatal (catch + warn).
+- **Initialisatie aangepast**: de `setTimeout`-callback is nu `async` zodat `await createCountryOverlay()` afgewacht kan worden vóórdat de prefetch start. Dit voorkomt dat de prefetch en de eerste render tegelijk het netwerk belasten.
+- **Serverbelasting**: 1 extra `/api/combined?month=X&layer=provinces` request per sessie per gebruiker (niet per pageload — browser HTTP-cache met `max-age=86400` vangt herhaalde aanvragen op).
+- Minified assets herbouwd: `script.min.js` 46.1% kleiner.
+
+---
+
 ## Map & Ad Fixes (21 Feb 2026)
 
 ### Plan
