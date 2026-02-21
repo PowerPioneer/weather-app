@@ -888,7 +888,8 @@ async function updateMapLayers() {
     
     // Get current zoom level
     const zoom = state.map.getZoom();
-    const COUNTRY_ZOOM_THRESHOLD = 5; // Show countries when zoom < 5, provinces when zoom >= 5
+    const isMobile = window.innerWidth <= 768;
+    const COUNTRY_ZOOM_THRESHOLD = isMobile ? 4 : 5; // Mobile: provinces at zoom >= 4, desktop: zoom >= 5
     
     // Update visualization based on zoom level
     if (state.selectedMonth) {

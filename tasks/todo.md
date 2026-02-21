@@ -473,3 +473,24 @@ Na git pull op de server:
 - Province data provides faster, cleaner visualization
 - File sizes: ~56 MB unoptimized, ~35 MB optimized (estimated)
 - Supports 4,596 provinces/states globally
+
+---
+
+## Popup valt achter header op desktop (21 Feb 2026)
+
+### Diagnose
+
+Bij het aanklikken van een land op desktop verschijnt de Leaflet popup gedeeltelijk achter de vaste header. De popup is gebonden met `autoPan: false`, waardoor Leaflet de kaart nooit verschuift om de popup volledig zichtbaar te maken. Op desktop is de header vast bovenaan (`position: fixed`), waardoor de popup erachter verdwijnt. Op mobiel speelt dit niet door de andere layout.
+
+### Plan
+
+- [ ] Verander popup opties: `autoPan: true` en voeg `autoPanPaddingTopLeft` toe met de header hoogte als Y-offset.
+- [ ] Gebruik `document.querySelector('header').offsetHeight` om de dynamische headerhoogte te meten.
+
+### Review
+
+- Popup utoPan ingeschakeld met utoPanPaddingTopLeft = header hoogte + 10px padding.
+- Leaflet verschuift de kaart nu automatisch omhoog zodat de popup nooit achter de header valt.
+- utoPanPaddingBottomRight toegevoegd als symmetrische marge aan de onderkant.
+- Eén kleine wijziging in script.js bij de indPopup aanroep (regel ~2110).
+

@@ -812,8 +812,8 @@ main {
 
 /* Weather Details Overlay (right side) - Desktop only */
 .weather-details-overlay {
-    position: absolute;
-    top: 20px;
+    position: fixed;
+    top: calc(var(--header-height, 85px) + 20px);
     right: 20px;
     background: rgba(255, 255, 255, 0.95);
     padding: 1.5rem;
@@ -822,7 +822,7 @@ main {
     z-index: 1000;
     backdrop-filter: blur(10px);
     max-width: 320px;
-    max-height: calc(100vh - 140px);
+    max-height: calc(100vh - var(--header-height, 85px) - 40px);
     overflow-y: auto;
     display: block; /* Show on desktop */
 }
