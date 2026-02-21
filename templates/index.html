@@ -631,14 +631,14 @@
             crossorigin="anonymous"
           ></script>
 
-          <!-- Explicitly Fixed Sized Ad Unit -->
+          <!-- Responsive Ad Unit -->
           <ins
             class="adsbygoogle"
-            style="display: inline-block; width: 728px; height: 90px"
+            style="display: block; width: 100%; height: 90px"
             data-ad-client="ca-pub-2423510297813794"
             data-ad-slot="7458078684"
             data-ad-format="horizontal"
-            data-full-width-responsive="false"
+            data-full-width-responsive="true"
           ></ins>
 
           <script>
@@ -654,20 +654,18 @@
                 max-height: 60px !important;
                 overflow: hidden !important;
               }
-              /* Force the AdSense iframe to fit */
+              /* Let AdSense fill the width on mobile */
               .ad-container-bottom ins.adsbygoogle {
-                width: 320px !important;
+                width: 100% !important;
                 height: 50px !important;
-                min-width: 320px !important;
-                max-width: 320px !important;
+                max-width: 100% !important;
                 min-height: 50px !important;
                 max-height: 50px !important;
               }
               .ad-container-bottom iframe {
-                width: 320px !important;
+                width: 100% !important;
                 height: 50px !important;
-                min-width: 320px !important;
-                max-width: 320px !important;
+                max-width: 100% !important;
                 min-height: 50px !important;
                 max-height: 50px !important;
               }
