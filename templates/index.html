@@ -262,6 +262,20 @@
         rel="stylesheet"
         href="{{ url_for('static', filename='style.min.css') }}?v={{ asset_version }}"
     /></noscript>
+    <link
+      rel="preload"
+      href="{{ url_for('static', filename='onboarding.min.css') }}?v={{ asset_version }}"
+      as="style"
+      onload="
+        this.onload = null;
+        this.rel = 'stylesheet';
+      "
+    />
+    <noscript
+      ><link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='onboarding.min.css') }}?v={{ asset_version }}"
+    /></noscript>
   </head>
   <body>
     <!-- SEO Hidden Text for Screen Readers and Search Engines -->
@@ -289,6 +303,7 @@
             <p>Life's too short for bad weather</p>
           </div>
           <div class="header-right">
+            <button class="onboarding-help-btn" id="onboardingHelpBtn" aria-label="Show guided tour" title="Guided tour">?</button>
             <button class="hamburger-menu" id="hamburgerMenu" aria-label="Menu">
               <span></span>
               <span></span>
@@ -850,6 +865,10 @@
     <script
       defer
       src="{{ url_for('static', filename='script.min.js') }}?v={{ asset_version }}"
+    ></script>
+    <script
+      defer
+      src="{{ url_for('static', filename='onboarding.min.js') }}?v={{ asset_version }}"
     ></script>
   </body>
 </html>

@@ -73,6 +73,7 @@ header {
 .header-right {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
     grid-column: 3;
     justify-self: end;
     position: relative;
