@@ -2382,8 +2382,9 @@ async function createProvinceOverlay() {
                 const tempAvg = props.temp_avg;
                 const prec = props.prec_mean;
                 const sunhours = props.sunhours_mean;
-                
-                const result = calculateOverallScore(tempAvg, prec, sunhours);
+                const safetyLevel = props.safety_level;
+
+                const result = calculateOverallScore(tempAvg, prec, sunhours, safetyLevel);
                 
                 if (result) {
                     const [r, g, b, a] = result.color;
@@ -2443,7 +2444,7 @@ async function createProvinceOverlay() {
                         const tempAvg = props.temp_avg;
                         const prec = props.prec_mean;
                         const sunhours = props.sunhours_mean;
-                        const result = calculateOverallScore(tempAvg, prec, sunhours);
+                        const result = calculateOverallScore(tempAvg, prec, sunhours, props.safety_level);
                         valueStr = formatCriteriaIcons(result);
                     } else if (variable === 'temperature') {
                         // Convert temperature if in Fahrenheit mode
@@ -2466,9 +2467,17 @@ async function createProvinceOverlay() {
                     
                     const provinceName = props.name || 'Unknown';
                     const countryName = props.admin || '';
-                    
+
+                    const safetyLevelNum = parseInt(props.safety_level) || 0;
+                    let safetyHtml = '';
+                    if (safetyLevelNum > 2) {
+                        const safetyLevelText = { 3: 'Reconsider Travel', 4: 'Do Not Travel' }[safetyLevelNum] || '';
+                        const safetyColor = { 3: '#e65100', 4: '#c62828' }[safetyLevelNum] || '#000';
+                        safetyHtml = `<div style="margin-top: 4px; color: ${safetyColor}; font-size: 0.85em; font-weight: 600;">⚠️ ${safetyLevelText}</div>`;
+                    }
+
                     layer.bindTooltip(
-                        `<strong>${provinceName}</strong><div style="margin-top: 2px;">${countryName ? countryName + '<br>' : ''}${valueStr}</div>`,
+                        `<strong>${provinceName}</strong><div style="margin-top: 2px;">${countryName ? countryName + '<br>' : ''}${valueStr}${safetyHtml}</div>`,
                         { sticky: true }
                     );
                 }
@@ -2574,6 +2583,24 @@ async function createProvinceOverlay() {
                         document.querySelectorAll('.region-name').forEach(el => {
                             el.textContent = props.name || 'Unknown';
                             el.closest('p').style.display = 'block';  // Show the Region: line
+                        });
+
+                        // Show travel advisory warning for Level 3+ in both panels
+                        const panelSafetyLevel = parseInt(props.safety_level) || 0;
+                        const panelSafetyText = {
+                            3: '⚠️ Level 3: Reconsider Travel',
+                            4: '⛔ Level 4: Do Not Travel'
+                        }[panelSafetyLevel] || '';
+                        const panelSafetyColor = { 3: '#e65100', 4: '#c62828' }[panelSafetyLevel] || '';
+                        document.querySelectorAll('.safety-advisory-info').forEach(el => {
+                            if (panelSafetyLevel > 2) {
+                                el.querySelector('.safety-advisory-text').textContent = panelSafetyText;
+                                el.querySelector('.safety-advisory-text').style.color = panelSafetyColor;
+                                el.style.borderLeftColor = panelSafetyColor;
+                                el.style.display = 'block';
+                            } else {
+                                el.style.display = 'none';
+                            }
                         });
                         
                         // Fetch weather data for province center

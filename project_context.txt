@@ -1,6 +1,6 @@
 Project Context: "Where to go for great weather"
 
-A Flask-based weather visualization web app that helps users find destinations with optimal weather conditions.
+A Flask-based weather visualization web app that helps users find  travel destinations with optimal weather conditions.
 
 Tech Stack:
 
@@ -26,7 +26,7 @@ DEPLOYMENT.md - Complete deployment guide
 GTM_TAG_IDS.md - Analytics configuration reference
 Recent Changes:
 
-Migrated from direct GA/AdSense to Google Tag Manager
+Migrated from direct GA/AdSense to Google Tag Manager for tags. Except for Google Adsense, the tag is in the code without using GTM.
 Added travel safety data with 100+ country name mappings
 All province GeoJSON files regenerated with safety levels
 Deployment: Git pull → pip install → systemctl reload weather-app (zero-downtime)
