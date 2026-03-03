@@ -2,6 +2,8 @@ Project Context: "Where to go for great weather"
 
 A Flask-based weather visualization web app that helps users find  travel destinations with optimal weather conditions.
 
+This is the development environment, the actual webapp is running on a separate server.
+
 Tech Stack:
 
 Backend: Python/Flask, Gunicorn
