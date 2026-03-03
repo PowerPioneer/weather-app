@@ -54,7 +54,7 @@ def init_cache(app):
                 print("⚠️  Redis connection test failed, falling back to SimpleCache")
                 redis_enabled = False
         except Exception as e:
-            print(f"⚠️  Redis connection failed: {e}")
+            print(f"Warning: Redis connection failed: {e}")
             print("Falling back to in-memory SimpleCache")
             redis_enabled = False
     

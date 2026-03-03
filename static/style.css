@@ -661,7 +661,7 @@ main {
 /* Legend Overlay (top center) */
 .legend-overlay {
     position: fixed;
-    top: calc(var(--header-height, 100px) + 30px);
+    top: calc(var(--header-height, 100px) + 120px);
     left: 50%;
     transform: translateX(-50%);
     background: rgba(255, 255, 255, 0.95);
@@ -1184,7 +1184,7 @@ svg path {
     
     /* Legend adjustments */
     .legend-overlay {
-        top: calc(var(--header-height, 80px) + 20px);
+        top: calc(var(--header-height, 80px) + 100px);
         left: 50%;
         transform: translateX(-50%);
         max-width: calc(100vw - 20px);
